@@ -34,7 +34,7 @@ LOGGER = getLogger(__name__)
 class PianobarSkill(MycroftSkill):
 
     def __init__(self):
-        super(Pianobarskill, self).__init__(name="PianobarSkill")
+        super(PianobarSkill, self).__init__(name="PianobarSkill")
         self.process = None
 
     def initialize(self):
@@ -55,4 +55,4 @@ class PianobarSkill(MycroftSkill):
 
 
 def create_skill():
-    return MP3DemoSkill()
+    return PianobarSkill()
