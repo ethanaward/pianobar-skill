@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 from os.path import dirname, join
-
+import subprocess
 from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
 from mycroft.util.log import getLogger
