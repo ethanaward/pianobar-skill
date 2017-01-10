@@ -25,13 +25,14 @@ import subprocess
 from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
 from mycroft.util.log import getLogger
+from mycroft.skills.media import MediaSkill
 
 __author__ = 'eward'
 
 LOGGER = getLogger(__name__)
 
 
-class PianobarSkill(MycroftSkill):
+class PianobarSkill(MediaSkill):
 
     def __init__(self):
         super(PianobarSkill, self).__init__(name="PianobarSkill")
@@ -39,6 +40,7 @@ class PianobarSkill(MycroftSkill):
 
     def initialize(self):
         self.load_data_files(dirname(__file__))
+        super(PianobarSkill, self).initialize()
 
         play_pandora_intent = IntentBuilder("PlayPandoraIntent").\
             require("PlayKeyword").require("PandoraKeyword").build()
