@@ -45,8 +45,38 @@ class PianobarSkill(MycroftSkill):
         self.register_intent(play_pandora_intent,
                              self.handle_play_pandora_intent)
 
+        next_song_intent = IntentBuilder("PandoraNextIntent"). \
+            require("NextKeyword").build()
+        self.register_intent(next_song_intent, self.handle_next_song_intent)
+
+        pause_song_intent = IntentBuilder("PandoraPauseIntent"). \
+            require("PauseKeyword").build()
+        self.register_intent(pause_song_intent, self.handle_pause_song_intent)
+
+        resume_song_intent = IntentBuilder("PandoraResumeIntent"). \
+            require("ResumeKeyword").build()
+        self.register_intent(resume_song_intent, self.handle_resume_song_intent)
+
     def handle_play_pandora_intent(self, message):
-        self.process = subprocess.Popen(["pianobar"])
+        self.process = subprocess.Popen(["pianobar"], stdin = subprocess.PIPE)
+
+    def handle_next_song_intent(self, message):
+        if self.process is not None:
+            self.process.stdin.write("n")
+        else:
+            self.speak("Pandora is not playing")
+
+    def handle_pause_song_intent(self, message):
+        if self.process is not None:
+            self.process.stdin.write("S")
+        else:
+            self.speak("Pandora is not playing")
+
+    def handle_resume_song_intent(self, message):
+        if self.process is not None:
+            self.process.stdin.write("P")
+        else:
+            self.speak("Pandora is not playing")
 
     def stop(self):
         if self.process:  
