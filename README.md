@@ -1,6 +1,6 @@
 # Requirements
 
-In order to use this on the Pi, you will need the following file in `/etc/libao.conf`:
+In order to use this on the Pi, you will need the following in the file `/etc/libao.conf`:
 
 ```
 default_driver=pulse
