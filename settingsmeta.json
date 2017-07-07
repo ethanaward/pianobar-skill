@@ -1,0 +1,21 @@
+{
+  "sections": [
+    {
+      "name": "Pianobar",
+      "fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "label": "Email",
+          "value": "new value"
+        },
+        {
+            "name": "password",
+            "type": "password",
+            "label": "Password",
+            "value": ""
+        }
+      ]
+    }
+  ]
+}
