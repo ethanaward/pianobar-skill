@@ -10,13 +10,13 @@
                       "name": "email",
                       "type": "email",
                       "label": "Email",
-                      "value": "michael.nguyen@mycroft.ai"
+                      "value": ""
                   },
                   {
                       "name": "password",
                       "type": "password",
                       "label": "Password",
-                      "value": "mycrofttest"
+                      "value": ""
                   }
               ]
           }
