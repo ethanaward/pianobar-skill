@@ -11,7 +11,7 @@ if not path:
 else:
     path = expanduser(path)
 
-now_playing = join(path, 'pianobar', 'nowplaying')
+now_playing = join(path, 'pianobar', 'info')
 
 info = sys.stdin.readlines()
 cmd = sys.argv[1]

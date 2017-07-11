@@ -1,21 +1,25 @@
 {
-  "sections": [
-    {
-      "name": "Pianobar",
-      "fields": [
-        {
-          "name": "email",
-          "type": "email",
-          "label": "Email",
-          "value": "new value"
-        },
-        {
-            "name": "password",
-            "type": "password",
-            "label": "Password",
-            "value": ""
-        }
+  "identifier": "PianobarSkill",
+  "name": "Pandora",
+  "skillMetadata": {
+      "sections": [
+          {
+              "name": "Login",
+              "fields": [
+                  {
+                      "name": "email",
+                      "type": "email",
+                      "label": "Email",
+                      "value": "michael.nguyen@mycroft.ai"
+                  },
+                  {
+                      "name": "password",
+                      "type": "password",
+                      "label": "Password",
+                      "value": "mycrofttest"
+                  }
+              ]
+          }
       ]
-    }
-  ]
+  }
 }

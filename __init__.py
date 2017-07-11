@@ -45,6 +45,7 @@ class PianobarSkill(MycroftSkill):
     def initialize(self):
         self.load_data_files(dirname(__file__))
         self._setup()
+        # self.load_data_files(dirname(__file__))
         play_pandora_intent = IntentBuilder("PlayPandoraIntent").\
             require("PlayKeyword").require("PandoraKeyword").build()
         self.register_intent(play_pandora_intent,
@@ -73,9 +74,10 @@ class PianobarSkill(MycroftSkill):
             self.is_setup = True
 
         if self.is_setup is True:
-            config_path = join(self.pianobar_path, 'config')
             if not exists(self.pianobar_path):
                 makedirs(self.pianobar_path)
+
+            config_path = join(self.pianobar_path, 'config')
 
             with open(config_path, 'w+') as f:
 
@@ -96,6 +98,24 @@ class PianobarSkill(MycroftSkill):
                                       self.settings["email"],
                                       self.settings["password"],
                                       self._dir + '/event_command.py'))
+
+    def _load_current_info(self):
+        info_path = join(self.pianobar_path, 'info')
+
+        if not exists(info_path):
+            makedirs(info_path)
+
+        with open(info_path, 'r') as f:
+            info = json.load(f)
+
+        self.settings["title"] = info["title"]
+        self.settings["station_name"] = info["stationName"]
+        self.settings["station_count"] = int(info["stationCount"])
+        self.settings["stations"] = []
+
+        for index in self.settings["station_count"]:
+            station = "station" + str(index)
+            self.settings["stations"].append((info[station], index))
 
     def handle_play_pandora_intent(self, message):
         if self.is_setup is True:
