@@ -236,6 +236,15 @@ class PianobarSkill(MycroftSkill):
                     station_number = str(station[1]) + "\n"
                     self.process.stdin.write(station_number)
                     self.piano_bar_state = "play"
+        else:
+            self.process.stdin.write("S")
+            self.piano_bar_state = "paused"
+
+            self.speak("you are currently not subscribed to that station")
+            wait_while_speaking()
+
+            self.process.stdin.write("P")
+            self.piano_bar_state = "play"
 
     def handle_list_stations_intent(self, message):
         if self.process is not None:
