@@ -1,6 +1,7 @@
 # Requirements
 
 This skill should work with Mycroft version 0.8.18 +
+
 To use the Pandora ( Pianobar ) skill you'll first need to install Pianobar and configure it to work with your account.  In the future we plan to allow configuration through home.mycroft.ai.
 
 First install pianobar
