@@ -16,7 +16,7 @@ create a settings.json file. In the file add
 ```
 {
     "email": [YOUR PANDORA EMAIL LOGIN HERE],
-    "password:" [YOuR PANDORA PASSWORD HERE]
+    "password:" [YOUR PANDORA PASSWORD HERE]
 }
 ```
 
