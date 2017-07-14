@@ -58,5 +58,10 @@ Now say "Hey Mycroft....play pandora"
     
        example "Hey Mycroft... list stations"
 
+6. Change Stations
+    
+       example "Hey Mycroft... change station to Today's Top Hits"
+
+
 
 More to come as this project is under active development. 
