@@ -13,24 +13,49 @@ apt-get -y install pianobar
 
 create a settings.json file. In the file add 
 
-```{
+```
+{
     "email": [YOUR PANDORA EMAIL LOGIN HERE],
     "password:" [YOuR PANDORA PASSWORD HERE]
-}```
+}
+```
 
-Once add these file, the skill should reload from the mycroft MSM. Now say "Hey Mycroft....play pandora"
+Once adding settings.json, the skill should reload from the mycroft MSM. If not, restart the skills service.
+
+On Mark 1 and Picroft
+```
+sudo service mycroft-skills restart
+```
+
+On Desktop
+
+```
+./mycroft.sh start
+```
+
+Now say "Hey Mycroft....play pandora"
 
 ## Features
 
 1. Play Pandora 
-    example "Hey Mycroft... play pandora"
+                
+       example "Hey Mycroft... play pandora"
+
 2. Pause 
-    example "Hey Mycroft... pause"
+    
+       example "Hey Mycroft... pause"
+
 3. Resume
-    example "Hey Mycroft... resume song"
+    
+       example "Hey Mycroft... resume song"
+
 4. Next Song
-    example "Hey Mycroft... next song"
+    
+       example "Hey Mycroft... next song"
+
 5. List Stations
-    example "Hey Mycroft... list stations"
+    
+       example "Hey Mycroft... list stations"
+
 
 More to come as this project is under active development. 
