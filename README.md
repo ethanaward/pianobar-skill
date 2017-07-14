@@ -12,7 +12,14 @@ apt-get update
 apt-get -y install pianobar
 ```
 
-create a settings.json file. In the file add 
+Now you need to set Pianobar to use the appropriate drivers. Edit the file '/etc/libao.conf' :
+
+```
+echo default_driver=pulse > /etc/libao.conf
+echo dev=0 >> /etc/libao.conf
+```
+
+create a settings.json file in the root directory of this skill. in file add
 
 ```
 {
@@ -57,6 +64,11 @@ Now say "Hey Mycroft....play pandora"
 5. List Stations
     
        example "Hey Mycroft... list stations"
+
+6. Change Stations
+    
+       example "Hey Mycroft... change station to Today's Top Hits"
+
 
 
 More to come as this project is under active development. 
