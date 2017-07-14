@@ -12,7 +12,14 @@ apt-get update
 apt-get -y install pianobar
 ```
 
-create a settings.json file. In the root directory of your file add..
+Now you need to set Pianobar to use the appropriate drivers. Edit the file '/etc/libao.conf' :
+
+```
+echo default_driver=pulse > /etc/libao.conf
+echo dev=0 >> /etc/libao.conf
+```
+
+create a settings.json file in the root directory of this skill. in file add
 
 ```
 {
