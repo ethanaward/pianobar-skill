@@ -12,7 +12,7 @@ apt-get update
 apt-get -y install pianobar
 ```
 
-create a settings.json file. In the file add 
+create a settings.json file. In the root directory of your file add..
 
 ```
 {
