@@ -1,5 +1,6 @@
 # Requirements
 
+This skill should work with Mycroft version 0.8.18 +
 To use the Pandora ( Pianobar ) skill you'll first need to install Pianobar and configure it to work with your account.  In the future we plan to allow configuration through home.mycroft.ai.
 
 First install pianobar
@@ -10,4 +11,26 @@ apt-get update
 apt-get -y install pianobar
 ```
 
-Once you've been able to start Pianobar from the command line you should be able to have Mycroft start it by saying "Hey, Mycroft....play pandora"
+create a settings.json file. In the file add 
+
+```{
+    "email": [YOUR PANDORA EMAIL LOGIN HERE],
+    "password:" [YOuR PANDORA PASSWORD HERE]
+}```
+
+Once add these file, the skill should reload from the mycroft MSM. Now say "Hey Mycroft....play pandora"
+
+## Features
+
+1. Play Pandora 
+    example "Hey Mycroft... play pandora"
+2. Pause 
+    example "Hey Mycroft... pause"
+3. Resume
+    example "Hey Mycroft... resume song"
+4. Next Song
+    example "Hey Mycroft... next song"
+5. List Stations
+    example "Hey Mycroft... list stations"
+
+More to come as this project is under active development. 
