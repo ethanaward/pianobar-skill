@@ -45,6 +45,7 @@ class PianobarSkill(MycroftSkill):
         self.is_setup = False
         self.piano_bar_state = None
         self.vocabs = []
+        self.terminate_timer = None
         self.pianobar_path = expanduser('~/.config/pianobar')
 
     def initialize(self):
@@ -144,8 +145,10 @@ class PianobarSkill(MycroftSkill):
         info_ready_path = join(self.pianobar_path, 'info_ready')
         if isfile(info_ready_path):
             self._load_current_info()
-            remove(info_ready_path)
-            LOGGER.info("removed")
+            try:
+                remove(info_ready_path)
+            except Exception as e:
+                LOGGER.error(e)
             time.sleep(0.1)
             self.enclosure.mouth_text(self.settings["title"])
 
@@ -173,6 +176,7 @@ class PianobarSkill(MycroftSkill):
             self.settings["stations"].append((info[station], index))
 
         LOGGER.info(self.settings["stations"])
+        self.settings.store()
 
     def handle_play_pandora_intent(self, message):
         if self.is_setup is True:
@@ -184,13 +188,14 @@ class PianobarSkill(MycroftSkill):
                                             stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE)
             self.process.stdin.write("0\n")
-            self.piano_bar_state = 'play'
+            self.piano_bar_state = "play"
         else:
             self.speak("Please go to home.mycroft.ai to register pandora")
 
     def handle_next_song_intent(self, message):
         if self.process is not None:
             self.process.stdin.write("n")
+            self.piano_bar_state = "play"
         else:
             self.speak("Pandora is not playing")
 
@@ -198,12 +203,13 @@ class PianobarSkill(MycroftSkill):
         if self.process is not None:
             self.process.stdin.write("S")
             self.piano_bar_state = "paused"
-        else:
+
             self.speak("Pandora is not playing")
 
     def handle_resume_song_intent(self, message):
         if self.process is not None:
             self.process.stdin.write("P")
+            self.piano_bar_state = "play"
         else:
             self.speak("Pandora is not playing")
 
@@ -214,6 +220,7 @@ class PianobarSkill(MycroftSkill):
         LOGGER.info(utterance)
         for vocab in self.vocabs:
             utterance = utterance.replace(vocab, '')
+        utterance = utterance.lstrip()
         LOGGER.info(utterance)
         stations = [station[0] for station in self.settings["stations"]]
         probabilities = fuzz_process.extract(utterance, stations)
@@ -227,7 +234,7 @@ class PianobarSkill(MycroftSkill):
                     self.process.stdin.write("S")
                     self.piano_bar_state = "paused"
 
-                    self.speak("change station to{}".
+                    self.speak("changing station to{}".
                                format(station[0]))
 
                     wait_while_speaking()
@@ -247,6 +254,7 @@ class PianobarSkill(MycroftSkill):
             self.piano_bar_state = "play"
 
     def handle_list_stations_intent(self, message):
+        LOGGER.info(self.settings)
         if self.process is not None:
             self.process.stdin.write("S")
             self.piano_bar_state = "paused"
@@ -267,10 +275,31 @@ class PianobarSkill(MycroftSkill):
             self.process.stdin.write("P")
             self.piano_bar_state = "play"
 
+    def terminate_process(self):
+        LOGGER.info(self.piano_bar_state)
+        if self.piano_bar_state is None:
+            self.process.terminate()
+            LOGGER.info("Pianobar Skill is terminated")
+            self.process.wait()
+            self.process = None
+
     def stop(self):
         if self.process:
-            self.process.terminate()
-            self.process.wait()
+            self.process.stdin.write("S")
+            self.piano_bar_state = "paused"
+
+            LOGGER.info("Pianobar Skill will terminate in 15 seconds" +
+                        "if no pianobar commands are given")
+
+            try:
+                self.terminate_timer.cancel()
+            except Exception as e:
+                LOGGER.info(e)
+
+            self.piano_bar_state = None
+            self.terminate_timer = Timer(15, self.terminate_process)
+            self.terminate_timer.daemon = True
+            self.terminate_timer.start()
 
 
 def create_skill():

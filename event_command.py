@@ -34,6 +34,8 @@ from mycroft.util.log import getLogger
     The events can be captured in event variable.
 """
 
+__author__ = 'MichaelNguyen'
+
 
 LOGGER = getLogger(__name__)
 
@@ -50,13 +52,6 @@ info = sys.stdin.readlines()
 event = sys.argv[1]
 
 if event == 'songstart':
-    # from mycroft.client.enclosure.api import EnclosureAPI
-    # from mycroft.messagebus.client.ws import WebsocketClient
-
-    # ws = WebsocketClient()
-    # enclosure = EnclosureAPI(ws)
-    # from __init__ import pianobar_instance
-
     song_dict = {}
     for item in info:
         item = item.split("=")
@@ -65,13 +60,8 @@ if event == 'songstart':
     with open(now_playing, 'w') as f:
         json.dump(song_dict, f)
 
-    # LOGGER.debug(sys.path[0])
-
     # HACKY! This creates a file to notify the pianobar skill
     # to load the information
     pianobar_path = join(expanduser('~/.config/pianobar'), 'info_ready')
     with open(pianobar_path, 'w+') as f:
         pass
-
-    # LOGGER.debug("enclosure")
-    # enclosure.mouth_text("TEST")
