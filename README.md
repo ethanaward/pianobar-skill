@@ -1,5 +1,7 @@
 # Requirements
 
+This skill should work with Mycroft version 0.8.18 +
+
 To use the Pandora ( Pianobar ) skill you'll first need to install Pianobar and configure it to work with your account.  In the future we plan to allow configuration through home.mycroft.ai.
 
 First install pianobar
@@ -9,35 +11,71 @@ sudo su
 apt-get update
 apt-get -y install pianobar
 ```
-Now you need to set Pianobar to use the appropriate drivers.  Edit the file '/etc/libao.conf' :
+
+Now you need to set Pianobar to use the appropriate drivers. Edit the file '/etc/libao.conf' :
 
 ```
 echo default_driver=pulse > /etc/libao.conf
 echo dev=0 >> /etc/libao.conf
 ```
-Create the config file for Pianobar.  You'll want to do this under the account that will be using the software.  On our Mark I devices this is the user "mycroft"
 
+You can install via MSM or git clone this project into the mycroft skills directory usually found in /opt/mycroft/skills
 ```
-sudo su
-su mycroft
-mkdir /home/mycroft/.config/pianobar
-touch /home/mycroft/.config/pianobar/config
+git clone https://github.com/ethanaward/pianobar-skill.git
+cd pianobar-skill
 ```
 
-The Pianobar version that is built into Raspbian is out of date and has a bad TLS key.  You'll want to specify a key, the account name and password.  You'll also want to set the audio quality and start station, usern and password.
+create a settings.json file in the root directory of this skill. in file add
+
 
 ```
-echo audio_quality = medium > /home/mycroft/.config/pianobar/config
-echo tls_fingerprint = FC2E6AF49FC63AEDAD1078DC22D1185B809E7534 >> /home/mycroft/.config/pianobar/config
-echo user = [USER EMAIL HERE] >> /home/mycroft/.config/pianobar/config
-echo password = [PANDORA PASSWORD HERE] >> /home/mycroft/.config/pianobar/config
-```
-Now you should be able to play Pandora from the command line.
-
-```
-pianobar
+{
+    "email": [YOUR PANDORA EMAIL LOGIN HERE],
+    "password:" [YOUR PANDORA PASSWORD HERE]
+}
 ```
 
-Ctrl + C will exit.
+Once adding settings.json, the skill should reload from the mycroft MSM. If not, restart the skills service.
 
-Once you've been able to start Pianobar from the command line you should be able to have Mycroft start it by saying "Hey, Mycroft....play pandora"
+On Mark 1 and Picroft
+```
+sudo service mycroft-skills restart
+```
+
+On Desktop
+
+```
+./mycroft.sh start
+```
+
+Now say "Hey Mycroft....play pandora"
+
+## Features
+
+1. Play Pandora 
+                
+       example "Hey Mycroft... play pandora"
+
+2. Pause 
+    
+       example "Hey Mycroft... pause"
+
+3. Resume
+    
+       example "Hey Mycroft... resume song"
+
+4. Next Song
+    
+       example "Hey Mycroft... next song"
+
+5. List Stations
+    
+       example "Hey Mycroft... list stations"
+
+6. Change Stations
+    
+       example "Hey Mycroft... change station to Today's Top Hits"
+
+
+
+More to come as this project is under active development. 
