@@ -30,8 +30,8 @@ create a settings.json file in the root directory of this skill. in file add
 
 ```
 {
-    "email": [YOUR PANDORA EMAIL LOGIN HERE],
-    "password:" [YOUR PANDORA PASSWORD HERE]
+    "email": "YOUR PANDORA EMAIL LOGIN HERE",
+    "password": "YOUR PANDORA PASSWORD HERE"
 }
 ```
 
