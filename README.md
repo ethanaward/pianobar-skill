@@ -25,6 +25,13 @@ git clone https://github.com/ethanaward/pianobar-skill.git
 cd pianobar-skill
 ```
 
+Install the skill requirements from the requirements.txt
+
+```
+pip install -r requirements.txt
+```
+
+
 create a settings.json file in the root directory of this skill. in file add
 
 
