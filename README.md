@@ -19,7 +19,14 @@ echo default_driver=pulse > /etc/libao.conf
 echo dev=0 >> /etc/libao.conf
 ```
 
+You can install via MSM or git clone this project into the mycroft skills directory usually found in /opt/mycroft/skills
+```
+git clone https://github.com/ethanaward/pianobar-skill.git
+cd pianobar-skill
+```
+
 create a settings.json file in the root directory of this skill. in file add
+
 
 ```
 {
