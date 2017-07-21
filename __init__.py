@@ -32,6 +32,7 @@ from mycroft.util.log import getLogger
 from threading import Timer
 from mycroft.util import wait_while_speaking
 from fuzzywuzzy import process as fuzz_process
+from uuid import uuid1
 
 __author__ = 'eward, MichaelNguyen'
 
@@ -46,7 +47,9 @@ class PianobarSkill(MycroftSkill):
         self.piano_bar_state = None
         self.vocabs = []
         self.terminate_timer = None
+        self.volume_state = 0
         self.pianobar_path = expanduser('~/.config/pianobar')
+        self.uuid = uuid1()
 
     def initialize(self):
         self.load_data_files(dirname(__file__))
@@ -86,6 +89,22 @@ class PianobarSkill(MycroftSkill):
         """
         self._configure_pianobar()
         self._load_vocab_files()
+        self.emitter.on("recognizer_loop:record_begin", self._pause)
+        self.emitter.on("recognizer_loop:audio_output_end", self._play)
+
+    def _pause(self, process=None):
+        LOGGER.info(self.uuid)
+        LOGGER.info(self.process)
+        if self.process is not None:
+            self.process.stdin.write("S")
+            self.piano_bar_state = "paused"
+
+    def _play(self, event=None):
+        LOGGER.info(self.uuid)
+        LOGGER.info(self.process)
+        if self.process is not None:
+            self.process.stdin.write("P")
+            self.piano_bar_state = "play"
 
     def _configure_pianobar(self):
         """
@@ -181,16 +200,20 @@ class PianobarSkill(MycroftSkill):
     def handle_play_pandora_intent(self, message):
         if self.is_setup is True:
 
+            # kill any pianobar instance that exists
+            subprocess.call("pkill pianobar", shell=True)
+
             self.speak("playing pandora")
             wait_while_speaking()
 
             self.process = subprocess.Popen(["pianobar"],
                                             stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE)
+
             self.process.stdin.write("0\n")
             self.piano_bar_state = "play"
         else:
-            self.speak("Please go to home.mycroft.ai to register pandora")
+            self.speak("Please go to home.mycroft.ai to register pandora")        
 
     def handle_next_song_intent(self, message):
         if self.process is not None:
@@ -203,7 +226,7 @@ class PianobarSkill(MycroftSkill):
         if self.process is not None:
             self.process.stdin.write("S")
             self.piano_bar_state = "paused"
-
+        else:
             self.speak("Pandora is not playing")
 
     def handle_resume_song_intent(self, message):
@@ -220,6 +243,9 @@ class PianobarSkill(MycroftSkill):
         LOGGER.info(utterance)
         for vocab in self.vocabs:
             utterance = utterance.replace(vocab, '')
+
+        # strip out any other non important words
+        utterance.repace("to", "")
         utterance = utterance.lstrip()
         LOGGER.info(utterance)
         stations = [station[0] for station in self.settings["stations"]]
@@ -277,18 +303,21 @@ class PianobarSkill(MycroftSkill):
 
     def terminate_process(self):
         LOGGER.info(self.piano_bar_state)
-        if self.piano_bar_state is None:
+        if self.piano_bar_state is "stop":
             self.process.terminate()
             LOGGER.info("Pianobar Skill is terminated")
             self.process.wait()
             self.process = None
+
+            # kill any pianobar instance that exists
+            subprocess.call("pkill pianobar", shell=True)
 
     def stop(self):
         if self.process:
             self.process.stdin.write("S")
             self.piano_bar_state = "paused"
 
-            LOGGER.info("Pianobar Skill will terminate in 15 seconds" +
+            LOGGER.info("Pianobar Skill will terminate in an hour " +
                         "if no pianobar commands are given")
 
             try:
@@ -296,8 +325,8 @@ class PianobarSkill(MycroftSkill):
             except Exception as e:
                 LOGGER.info(e)
 
-            self.piano_bar_state = None
-            self.terminate_timer = Timer(15, self.terminate_process)
+            self.piano_bar_state = "stop"
+            self.terminate_timer = Timer(3600, self.terminate_process)
             self.terminate_timer.daemon = True
             self.terminate_timer.start()
 
