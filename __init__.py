@@ -32,7 +32,6 @@ from mycroft.util.log import getLogger
 from threading import Timer
 from mycroft.util import wait_while_speaking
 from fuzzywuzzy import process as fuzz_process
-from uuid import uuid1
 
 __author__ = 'eward, MichaelNguyen'
 
@@ -49,39 +48,56 @@ class PianobarSkill(MycroftSkill):
         self.terminate_timer = None
         self.volume_state = 0
         self.pianobar_path = expanduser('~/.config/pianobar')
-        self.uuid = uuid1()
 
     def initialize(self):
         self.load_data_files(dirname(__file__))
         self._setup()
         self._check_for_pianobar_event()
-        play_pandora_intent = IntentBuilder("PlayPandoraIntent").\
+
+        def handle_pause(message):
+            return self._check_before(
+                        self.pause_song, message)
+
+        def handle_next(message):
+            return self._check_before(
+                        self.next_song, message)
+
+        def handle_resume(message):
+            return self._check_before(
+                        self.resume_song, message)
+
+        def handle_list(message):
+            return self._check_before(
+                        self.list_stations, message)
+
+        def handle_change(message):
+            return self._check_before(
+                        self.change_station, message)
+
+        play_pandora_intent = IntentBuilder("PlayPandoraIntent"). \
             require("PlayKeyword").require("PandoraKeyword").build()
         self.register_intent(play_pandora_intent,
-                             self.handle_play_pandora_intent)
+                             self.play_pandora)
 
         next_song_intent = IntentBuilder("PandoraNextIntent"). \
             require("NextKeyword").build()
-        self.register_intent(next_song_intent, self.handle_next_song_intent)
+        self.register_intent(next_song_intent, handle_next)
 
         pause_song_intent = IntentBuilder("PandoraPauseIntent"). \
             require("PauseKeyword").build()
-        self.register_intent(pause_song_intent, self.handle_pause_song_intent)
+        self.register_intent(pause_song_intent, handle_pause)
 
         resume_song_intent = IntentBuilder("PandoraResumeIntent"). \
             require("ResumeKeyword").build()
-        self.register_intent(resume_song_intent,
-                             self.handle_resume_song_intent)
+        self.register_intent(resume_song_intent, handle_resume)
 
         list_stations_intent = IntentBuilder("PandoraListStationIntent"). \
             require("QueryKeyword").require("StationKeyword").build()
-        self.register_intent(list_stations_intent,
-                             self.handle_list_stations_intent)
+        self.register_intent(list_stations_intent, handle_list)
 
         change_stations_intent = IntentBuilder("PandoraChangeStationIntent"). \
             require("ChangeKeyword").require("StationKeyword").build()
-        self.register_intent(change_stations_intent,
-                             self.handle_change_station_intent)
+        self.register_intent(change_stations_intent, handle_change)
 
     def _setup(self):
         """
@@ -92,19 +108,22 @@ class PianobarSkill(MycroftSkill):
         self.emitter.on("recognizer_loop:record_begin", self._pause)
         self.emitter.on("recognizer_loop:audio_output_end", self._play)
 
-    def _pause(self, process=None):
-        LOGGER.info(self.uuid)
-        LOGGER.info(self.process)
+    def _check_before(self, func, message):
+        """
+            Check if pianobar process is running before running other functions
+        """
         if self.process is not None:
-            self.process.stdin.write("S")
-            self.piano_bar_state = "paused"
+            func(message)
+        else:
+            self.speak("Pandora is not playing")
+
+    def _pause(self, event=None):
+        if self.process is not None:
+            self.pause_song()
 
     def _play(self, event=None):
-        LOGGER.info(self.uuid)
-        LOGGER.info(self.process)
         if self.process is not None:
-            self.process.stdin.write("P")
-            self.piano_bar_state = "play"
+            self.resume_song()
 
     def _configure_pianobar(self):
         """
@@ -197,9 +216,8 @@ class PianobarSkill(MycroftSkill):
         LOGGER.info(self.settings["stations"])
         self.settings.store()
 
-    def handle_play_pandora_intent(self, message):
+    def play_pandora(self, message=None):
         if self.is_setup is True:
-
             # kill any pianobar instance that exists
             subprocess.call("pkill pianobar", shell=True)
 
@@ -213,30 +231,21 @@ class PianobarSkill(MycroftSkill):
             self.process.stdin.write("0\n")
             self.piano_bar_state = "play"
         else:
-            self.speak("Please go to home.mycroft.ai to register pandora")        
+            self.speak("Please go to home.mycroft.ai to register pandora")
 
-    def handle_next_song_intent(self, message):
-        if self.process is not None:
+    def next_song(self, message=None):
             self.process.stdin.write("n")
             self.piano_bar_state = "play"
-        else:
-            self.speak("Pandora is not playing")
 
-    def handle_pause_song_intent(self, message):
-        if self.process is not None:
+    def pause_song(self, message=None):
             self.process.stdin.write("S")
             self.piano_bar_state = "paused"
-        else:
-            self.speak("Pandora is not playing")
 
-    def handle_resume_song_intent(self, message):
-        if self.process is not None:
+    def resume_song(self, message=None):
             self.process.stdin.write("P")
             self.piano_bar_state = "play"
-        else:
-            self.speak("Pandora is not playing")
 
-    def handle_change_station_intent(self, message):
+    def change_station(self, message=None):
         utterance = message.data["utterance"]
         station_to_play = None
         LOGGER.info(self.vocabs)
@@ -245,7 +254,7 @@ class PianobarSkill(MycroftSkill):
             utterance = utterance.replace(vocab, '')
 
         # strip out any other non important words
-        utterance.repace("to", "")
+        utterance.replace("to", "")
         utterance = utterance.lstrip()
         LOGGER.info(utterance)
         stations = [station[0] for station in self.settings["stations"]]
@@ -256,10 +265,7 @@ class PianobarSkill(MycroftSkill):
             station_number = None
             for station in self.settings["stations"]:
                 if station[0] == probabilities[0][0]:
-
-                    self.process.stdin.write("S")
-                    self.piano_bar_state = "paused"
-
+                    self.pause_song()
                     self.speak("changing station to{}".
                                format(station[0]))
 
@@ -270,36 +276,25 @@ class PianobarSkill(MycroftSkill):
                     self.process.stdin.write(station_number)
                     self.piano_bar_state = "play"
         else:
-            self.process.stdin.write("S")
-            self.piano_bar_state = "paused"
-
+            self.pause_song()
             self.speak("you are currently not subscribed to that station")
             wait_while_speaking()
+            self.resume_song()
 
-            self.process.stdin.write("P")
-            self.piano_bar_state = "play"
+    def list_stations(self, message=None):
+        self.pause_song()
+        time_pause = 4
+        list_station_dialog = "subscribed pandora stations are. ."
+        for station in self.settings["stations"]:
+            list_station_dialog += "{} . ".format(station[0])
+            time_pause += 2
 
-    def handle_list_stations_intent(self, message):
-        LOGGER.info(self.settings)
-        if self.process is not None:
-            self.process.stdin.write("S")
-            self.piano_bar_state = "paused"
+        self.speak(list_station_dialog)
+        # TODO: explore why this does not work
+        # wait_while_speaking()
 
-            time_pause = 4
-
-            list_station_dialog = "subscribed pandora stations are. ."
-            for station in self.settings["stations"]:
-                list_station_dialog += "{} . ".format(station[0])
-                time_pause += 2
-
-            self.speak(list_station_dialog)
-            # TODO: explore why this does not work
-            # wait_while_speaking()
-
-            time.sleep(time_pause)
-
-            self.process.stdin.write("P")
-            self.piano_bar_state = "play"
+        time.sleep(time_pause)
+        self.play_song()
 
     def terminate_process(self):
         LOGGER.info(self.piano_bar_state)
@@ -314,8 +309,7 @@ class PianobarSkill(MycroftSkill):
 
     def stop(self):
         if self.process:
-            self.process.stdin.write("S")
-            self.piano_bar_state = "paused"
+            self.pause_song()
 
             LOGGER.info("Pianobar Skill will terminate in an hour " +
                         "if no pianobar commands are given")
