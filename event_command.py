@@ -27,7 +27,6 @@ import sys
 import json
 from os.path import expanduser, join, abspath
 from threading import Thread
-from mycroft.util.log import getLogger
 """
     This module is used as a callback for pianobar events. pianobar
     emits different events and calls this module for every event.
@@ -35,10 +34,6 @@ from mycroft.util.log import getLogger
 """
 
 __author__ = 'MichaelNguyen'
-
-
-LOGGER = getLogger(__name__)
-
 
 path = os.environ.get('XDG_CONFIG_HOME')
 if not path:
