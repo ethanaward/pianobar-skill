@@ -117,11 +117,11 @@ class PianobarSkill(MycroftSkill):
             self.speak("Pandora is not playing")
 
     def _pause(self, event=None):
-        if self.process is not None:
+        if self.process is not None and self.piano_bar_state != "stop":
             self.pause_song()
 
     def _play(self, event=None):
-        if self.process is not None:
+        if self.process is not None and self.piano_bar_state != "stop":
             self.resume_song()
 
     def _configure_pianobar(self):
