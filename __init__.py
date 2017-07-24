@@ -56,23 +56,23 @@ class PianobarSkill(MycroftSkill):
 
         def handle_pause(message=None):
             return self._check_before(
-                        self.pause_song, message)
+                        lambda x=None: self.pause_song(message))
 
         def handle_next(message=None):
             return self._check_before(
-                        self.next_song, message)
+                        lambda x=None: self.next_song(message))
 
         def handle_resume(message=None):
             return self._check_before(
-                        self.resume_song, message)
+                        lambda x=None: self.resume_song(message))
 
         def handle_list(message=None):
             return self._check_before(
-                        self.list_stations, message)
+                        lambda x=None: self.list_stations(message))
 
-        def handle_change(messag=None):
+        def handle_change(message=None):
             return self._check_before(
-                        self.change_station, message)
+                        lambda x=None: self.change_station(message))
 
         play_pandora_intent = IntentBuilder("PlayPandoraIntent"). \
             require("PlayKeyword").require("PandoraKeyword").build()
@@ -107,12 +107,12 @@ class PianobarSkill(MycroftSkill):
         self.emitter.on("recognizer_loop:record_begin", self._pause)
         self.emitter.on("recognizer_loop:audio_output_end", self._play)
 
-    def _check_before(self, func, message):
+    def _check_before(self, func):
         """
             Check if pianobar process is running before running func
         """
         if self.process is not None:
-            func(message)
+            func()
         else:
             self.speak("Pandora is not playing")
 
