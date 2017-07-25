@@ -61,7 +61,7 @@ Now say "Hey Mycroft....play pandora"
 
 1. Play Pandora 
                 
-       example "Hey Mycroft... play pandora"
+       example "Hey Mycroft... play pandora" or "Hey Mycroft, play Today's Hits Radio"
 
 2. Pause 
     
