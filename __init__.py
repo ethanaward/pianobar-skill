@@ -31,7 +31,7 @@ from mycroft.skills.core import MycroftSkill
 from mycroft.util.log import getLogger
 from threading import Timer
 from mycroft.util import wait_while_speaking
-from fuzzywuzzy import process as fuzz_process
+from fuzzywuzzy import fuzz, process as fuzz_process
 
 __author__ = 'eward, MichaelNguyen'
 
@@ -75,7 +75,7 @@ class PianobarSkill(MycroftSkill):
                         lambda x=None: self.change_station(message))
 
         play_pandora_intent = IntentBuilder("PlayPandoraIntent"). \
-            require("PlayKeyword").require("PandoraKeyword").build()
+            require("PlayKeyword").optionally("PandoraKeyword").build()
         self.register_intent(play_pandora_intent, self.play_pandora)
 
         next_song_intent = IntentBuilder("PandoraNextIntent"). \
@@ -219,35 +219,62 @@ class PianobarSkill(MycroftSkill):
             parse the utterance for station names
             and return station with highest probability
         """
+        common_words = [" to ", " on "]
         for vocab in self.vocabs:
             utterance = utterance.replace(vocab, "")
 
         # strip out other non important words
-        utterance.replace("to", "")
-        utterance.lstrip()
-        stations = [station[0] for station in self.settings["stations"]]
-        probabilities = fuzz_process.extract(utterance, stations)
+        for words in common_words:
+            utterance = utterance.replace(words, "")
 
-        if int(probabilities[0][1]) > 50:
-            station = probabilities[0][0]
+        utterance.lstrip()
+        LOGGER.info(utterance)
+        stations = [station[0] for station in self.settings["stations"]]
+        probabilities = fuzz_process.extractOne(
+            utterance, stations, scorer=fuzz.ratio)
+        if probabilities[1] > 70:
+            station = probabilities[0]
             return station
         else:
             return None
 
+    def _play_station(self, station):
+        self.speak("playing {}".format(station))
+        for channels in self.settings["stations"]:
+            if station == channels[0]:
+                wait_while_speaking()
+                self.process.stdin.write("s")
+                station_number = str(channels[1]) + "\n"
+                self.process.stdin.write(station_number)
+                self.piano_bar_state = "play"
+
     def play_pandora(self, message=None):
         if self.is_setup is True:
-            # kill any pianobar instance that exists
+
+            utterance = message.data["utterance"]
+            station = self._get_station(utterance)
+
             subprocess.call("pkill pianobar", shell=True)
 
-            self.speak("playing pandora")
-            wait_while_speaking()
-
+            # start pandora
             self.process = subprocess.Popen(["pianobar"],
                                             stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE)
-
             self.process.stdin.write("0\n")
             self.piano_bar_state = "play"
+            self.pause_song()
+
+            # if a stations is stated play that or else just play pandora
+            if station is not None:
+                self._play_station(station)
+            else:
+                for vocab in self.vocabs:
+                    utterance = utterance.replace(vocab, "")
+                if len(utterance.split()) >= 2:
+                    self.speak("you are not subsribed to that radio station.")
+                else:
+                    self.speak("playing pandora")
+                    self.resume_song()
         else:
             self.speak("Please go to home.mycroft.ai to register pandora")
 
@@ -266,30 +293,27 @@ class PianobarSkill(MycroftSkill):
     def change_station(self, message=None):
         utterance = message.data["utterance"]
         station = self._get_station(utterance)
+        self.pause_song()
 
         if station is not None:
-            self.pause_song()
-            self.speak("changing station to{}".format(station))
-            for channels in self.settings["stations"]:
-                if station == channels[0]:
-                    wait_while_speaking()
-                    self.process.stdin.write("s")
-                    station_number = str(channels[1]) + "\n"
-                    self.process.stdin.write(station_number)
-                    self.piano_bar_state = "play"
+            self._play_station(station)
         else:
-            self.pause_song()
             self.speak("you are currently not subscribed to that station")
             time.sleep(6)
             self.resume_song()
 
     def list_stations(self, message=None):
         self.pause_song()
-        time_pause = 4
-        list_station_dialog = "subscribed pandora stations are. ."
-        for station in self.settings["stations"]:
+        time_pause = 5
+
+        if len(self.settings["stations"]) >= 4:
+            list_station_dialog = "top 4 subscribed pandora stations are "
+        else:
+            list_station_dialog = "subscribed pandora stations are "
+
+        for station in self.settings["stations"][:4]:
             list_station_dialog += "{} . ".format(station[0])
-            time_pause += 2
+            time_pause += 3
 
         self.speak(list_station_dialog)
         # TODO: explore why this does not work
