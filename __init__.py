@@ -219,23 +219,27 @@ class PianobarSkill(MycroftSkill):
             parse the utterance for station names
             and return station with highest probability
         """
-        common_words = [" to ", " on "]
-        for vocab in self.vocabs:
-            utterance = utterance.replace(vocab, "")
+        try:
+            common_words = [" to ", " on "]
+            for vocab in self.vocabs:
+                utterance = utterance.replace(vocab, "")
 
-        # strip out other non important words
-        for words in common_words:
-            utterance = utterance.replace(words, "")
+            # strip out other non important words
+            for words in common_words:
+                utterance = utterance.replace(words, "")
 
-        utterance.lstrip()
-        LOGGER.info(utterance)
-        stations = [station[0] for station in self.settings["stations"]]
-        probabilities = fuzz_process.extractOne(
-            utterance, stations, scorer=fuzz.ratio)
-        if probabilities[1] > 70:
-            station = probabilities[0]
-            return station
-        else:
+            utterance.lstrip()
+            LOGGER.info(utterance)
+            stations = [station[0] for station in self.settings["stations"]]
+            probabilities = fuzz_process.extractOne(
+                utterance, stations, scorer=fuzz.ratio)
+            if probabilities[1] > 70:
+                station = probabilities[0]
+                return station
+            else:
+                return None
+        except Exception as e:
+            LOGGER.info(e)
             return None
 
     def _play_station(self, station):
