@@ -43,9 +43,10 @@ class PianobarSkill(MycroftSkill):
         super(PianobarSkill, self).__init__(name="PianobarSkill")
         self.process = None
         self.piano_bar_state = None
+        self.current_station = None
         self.vocabs = []
         self.terminate_timer = None
-        self.volume_state = 0
+        self.display_timer = None
         self.pianobar_path = expanduser('~/.config/pianobar')
 
     def initialize(self):
@@ -55,31 +56,35 @@ class PianobarSkill(MycroftSkill):
 
         def handle_pause(message=None):
             return self._check_before(
-                lambda x=None: self.pause_song(message))
+                lambda: self.pause_song(message))
 
-        def handle_next(message=None):
+        def handle_next_song(message=None):
             return self._check_before(
-                lambda x=None: self.next_song(message))
+                lambda: self.next_song(message))
+
+        def handle_next_station(message=None):
+            return self._check_before(
+                lambda: self.next_station(message))
 
         def handle_resume(message=None):
             return self._check_before(
-                lambda x=None: self.resume_song(message))
+                lambda: self.resume_song(message))
 
         def handle_list(message=None):
             return self._check_before(
-                lambda x=None: self.list_stations(message))
-
-        # def handle_play_station(message=None):
-        #     return self._check_before(
-        #                 lambda x=None: self.play_station(message))
+                lambda: self.list_stations(message))
 
         play_pandora_intent = IntentBuilder("PlayPandoraIntent"). \
             require("PlayKeyword").require("PandoraKeyword").build()
         self.register_intent(play_pandora_intent, self.play_pandora)
 
         next_song_intent = IntentBuilder("PandoraNextIntent"). \
-            require("NextKeyword").build()
-        self.register_intent(next_song_intent, handle_next)
+            require("NextKeyword").require("SongKeyword").build()
+        self.register_intent(next_song_intent, handle_next_song)
+
+        next_station_intent = IntentBuilder("PandoraNextStationIntent"). \
+            require("NextKeyword").require("StationKeyword").build()
+        self.register_intent(next_station_intent, handle_next_station)
 
         pause_song_intent = IntentBuilder("PandoraPauseIntent"). \
             require("PauseKeyword").build()
@@ -119,6 +124,8 @@ class PianobarSkill(MycroftSkill):
         try:
             if self.settings["email"] != "" or self.settings["password"] != "":
                 return True
+            else:
+                return False
         except Exception as e:
             LOGGER.error(e)
             return False
@@ -126,9 +133,11 @@ class PianobarSkill(MycroftSkill):
     def _pause(self, event=None):
         if self.process is not None and self.piano_bar_state != "stop":
             self.pause_song()
+            self.piano_bar_state = "websocket:pause"
 
     def _play(self, event=None):
-        if self.process is not None and self.piano_bar_state != "stop":
+        if self.process is not None and \
+                self.piano_bar_state == "websocket:pause":
             self.resume_song()
 
     def _configure_pianobar(self):
@@ -224,6 +233,7 @@ class PianobarSkill(MycroftSkill):
         self.process = subprocess.Popen(["pianobar"],
                                         stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE)
+        self.current_station = "0"
         self.process.stdin.write("0\n")
         self.piano_bar_state = "play"
 
@@ -256,12 +266,13 @@ class PianobarSkill(MycroftSkill):
             return None
 
     def _play_station(self, station):
-        self.speak("playing {}".format(station))
+        self.speak("playing {} ".format(station))
         wait_while_speaking()
         for channels in self.settings["stations"]:
             if station == channels[0]:
                 wait_while_speaking()
                 self.process.stdin.write("s")
+                self.current_station = str(channels[1])
                 station_number = str(channels[1]) + "\n"
                 self.process.stdin.write(station_number)
                 self.piano_bar_state = "play"
@@ -270,39 +281,21 @@ class PianobarSkill(MycroftSkill):
         if self._is_setup():
             self.speak("playing pandora")
             wait_while_speaking()
-            
+
             self._start_pianobar()
-
-            # utterance = message.data["utterance"]
-            # station = self._get_station(utterance)
-
-            # subprocess.call("pkill pianobar", shell=True)
-
-            # # start pandora
-            # self.process = subprocess.Popen(["pianobar"],
-            #                                 stdin=subprocess.PIPE,
-            #                                 stdout=subprocess.PIPE)
-            # self.process.stdin.write("0\n")
-            # self.piano_bar_state = "play"
-            # self.pause_song()
-
-            # # if a stations is stated play that or else just play pandora
-            # if station is not None:
-            #     self._play_station(station)
-            # else:
-            #     for vocab in self.vocabs:
-            #         utterance = utterance.replace(vocab, "")
-            #     if len(utterance.split()) >= 2:
-            #         self.speak("you are not subsribed to that radio station.")
-            #     else:
-            #         self.speak("playing pandora")
-            #         self.resume_song()
         else:
             self.speak("Please go to home.mycroft.ai to register pandora")
 
     def next_song(self, message=None):
         self.process.stdin.write("n")
         self.piano_bar_state = "play"
+
+    def next_station(self, message=None):
+        current_station = int(self.current_station)
+        new_station = current_station + 1
+        new_station = self.settings["stations"][new_station][0]
+        self.pause_song()
+        self._play_station(new_station)
 
     def pause_song(self, message=None):
         self.process.stdin.write("S")
@@ -329,7 +322,7 @@ class PianobarSkill(MycroftSkill):
             else:
                 self.speak("you are currently not subscribed to that station")
                 time.sleep(6)
-                if self.process is not None:
+                if self.process is not None and self.piano_bar_state != "stop":
                     self.resume_song()
         else:
             self.speak("Please go to home.mycroft.ai to register pandora")
