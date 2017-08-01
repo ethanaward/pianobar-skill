@@ -4,7 +4,7 @@ This skill should work with Mycroft version 0.8.18 +
 
 To use the Pandora ( Pianobar ) skill you'll first need to install Pianobar and configure it to work with your account.  In the future we plan to allow configuration through home.mycroft.ai.
 
-First install pianobar
+#### First install pianobar package
 
 ```
 sudo su
@@ -18,8 +18,19 @@ Now you need to set Pianobar to use the appropriate drivers. Edit the file '/etc
 echo default_driver=pulse > /etc/libao.conf
 echo dev=0 >> /etc/libao.conf
 ```
-
+#### Skill installation
 You can install via MSM or git clone this project into the mycroft skills directory usually found in /opt/mycroft/skills
+
+##### MSM
+This will install the requirements for you. 
+
+```
+msm install pandora
+```
+
+##### Manually (git clone)
+
+
 ```
 git clone https://github.com/ethanaward/pianobar-skill.git
 cd pianobar-skill
@@ -31,6 +42,7 @@ Install the skill requirements from the requirements.txt
 pip install -r requirements.txt
 ```
 
+#### Setting up Pandora Account
 
 create a settings.json file in the root directory of this skill. in file add
 
@@ -83,6 +95,9 @@ Now say "Hey Mycroft....play pandora"
     
        example "Hey Mycroft... change station to Today's Top Hits"
 
+7. Next Station
+       
+       example "Hey Mycroft... next station"
 
 
 More to come as this project is under active development. 
