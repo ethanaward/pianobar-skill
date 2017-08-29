@@ -108,8 +108,8 @@ class PianobarSkill(MycroftSkill):
         """
         self._configure_pianobar()
         self._load_vocab_files()
-        self.emitter.on("recognizer_loop:record_begin", self._pause)
-        self.emitter.on("recognizer_loop:audio_output_end", self._play)
+        # self.emitter.on("recognizer_loop:record_begin", self._pause)
+        # self.emitter.on("recognizer_loop:audio_output_end", self._play)
 
     def _check_before(self, func):
         """
@@ -360,7 +360,7 @@ class PianobarSkill(MycroftSkill):
     def stop(self):
         if self.process:
             self.pause_song()
-            LOGGER.info("Pianobar Skill will terminate in an hour " +
+            LOGGER.info("Pianobar Skill will terminate in an ten mins " +
                         "if no pianobar commands are given")
             try:
                 self.terminate_timer.cancel()
@@ -368,7 +368,7 @@ class PianobarSkill(MycroftSkill):
                 LOGGER.info(e)
 
             self.piano_bar_state = "stop"
-            self.terminate_timer = Timer(3600, self.terminate_process)
+            self.terminate_timer = Timer(600, self.terminate_process)
             self.terminate_timer.daemon = True
             self.terminate_timer.start()
 
