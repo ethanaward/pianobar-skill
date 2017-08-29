@@ -32,12 +32,15 @@ msm install pandora
 
 ```
 git clone https://github.com/ethanaward/pianobar-skill.git
-cd pianobar-skill
 ```
 NOTE* If you take this route, you will need to change the permissions on the Mark 1 or Picroft to Mycroft.
 
 ```
-chown mycroft .
+chown mycroft *
+```
+
+```
+cd pianobar-skill
 ```
 
 Install the skill requirements from the requirements.txt
