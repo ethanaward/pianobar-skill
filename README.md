@@ -37,7 +37,7 @@ git clone https://github.com/ethanaward/pianobar-skill.git
 NOTE* If you take this route, you will need to change the permissions on the Mark 1 or Picroft to Mycroft.
 
 ```
-chown mycroft *
+sudo chown mycroft *
 ```
 
 ```
