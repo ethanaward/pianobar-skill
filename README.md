@@ -10,6 +10,7 @@ To use the Pandora ( Pianobar ) skill you'll first need to install Pianobar and 
 sudo su
 apt-get update
 apt-get -y install pianobar
+exit
 ```
 
 Now you need to set Pianobar to use the appropriate drivers. Edit the file '/etc/libao.conf' :
