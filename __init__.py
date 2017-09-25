@@ -108,8 +108,6 @@ class PianobarSkill(MycroftSkill):
         """
         self._configure_pianobar()
         self._load_vocab_files()
-        # self.emitter.on("recognizer_loop:record_begin", self._pause)
-        # self.emitter.on("recognizer_loop:audio_output_end", self._play)
 
     def _check_before(self, func):
         """
