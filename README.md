@@ -109,3 +109,6 @@ Now say "Hey Mycroft....play pandora"
 
 
 More to come as this project is under active development. 
+
+## Mycroft Pulse Audio Configuration
+Sometimes when you are listening to pandora, you want pandora to pause and resume automatically, when you are interacting with mycroft. Mycroft has an Audio service that can do that but currently is not turned on by default. You can find out how to do it here https://github.com/MycroftAI/mycroft-core/wiki/Audio-Service#pulse-audio-features
