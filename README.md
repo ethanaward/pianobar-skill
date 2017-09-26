@@ -2,7 +2,7 @@
 
 This skill should work with Mycroft version 0.8.18 +
 
-To use the Pandora ( Pianobar ) skill you'll first need to install Pianobar and configure it to work with your account.  In the future we plan to allow configuration through home.mycroft.ai.
+To use the Pandora ( Pianobar ) skill you'll first need to install Pianobar and configure it to work with your account.
 
 #### First install pianobar package
 
@@ -52,7 +52,7 @@ pip install -r requirements.txt
 
 #### Setting up Pandora Account
 
-create a settings.json file in the root directory of this skill. in file add
+There is a settings.json file, you can either edit it yourself or if you can go to home.mycroft.ai, go to skills tab, and input your credentials there.
 
 
 ```
@@ -62,7 +62,7 @@ create a settings.json file in the root directory of this skill. in file add
 }
 ```
 
-Once adding settings.json, the skill should reload from the mycroft MSM. If not, restart the skills service.
+Once editing settings.json, the skill should reload from the mycroft MSM. If not, restart the skills service.
 
 On Mark 1 and Picroft
 ```
