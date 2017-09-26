@@ -128,16 +128,6 @@ class PianobarSkill(MycroftSkill):
             LOGGER.error(e)
             return False
 
-    def _pause(self, event=None):
-        if self.process is not None and self.piano_bar_state != "stop":
-            self.pause_song()
-            self.piano_bar_state = "websocket:pause"
-
-    def _play(self, event=None):
-        if self.process is not None and \
-                self.piano_bar_state == "websocket:pause":
-            self.resume_song()
-
     def _configure_pianobar(self):
         """
             Initiates pianobar configurations.
@@ -241,7 +231,7 @@ class PianobarSkill(MycroftSkill):
             and return station with highest probability
         """
         try:
-            common_words = [" to ", " on "]
+            common_words = [" to ", " on ", " pandora", " play"]
             for vocab in self.vocabs:
                 utterance = utterance.replace(vocab, "")
 
@@ -277,10 +267,13 @@ class PianobarSkill(MycroftSkill):
 
     def play_pandora(self, message=None):
         if self._is_setup():
-            self.speak("playing pandora")
-            wait_while_speaking()
-
+            station = self._get_station(message.data["utterance"])
             self._start_pianobar()
+            if station is not None:
+                self._play_station(station)
+            else:
+                self.speak("playing pandora")
+                wait_while_speaking()
         else:
             self.speak("Please go to home.mycroft.ai to register pandora")
 
@@ -339,36 +332,14 @@ class PianobarSkill(MycroftSkill):
             time_pause += 3
 
         self.speak(list_station_dialog)
-        # TODO: explore why this does not work
-        # wait_while_speaking()
+        wait_while_speaking()
 
         time.sleep(time_pause)
         self.resume_song()
 
-    def terminate_process(self):
-        if self.piano_bar_state is "stop":
-            self.process.terminate()
-            LOGGER.info("Pianobar Skill is terminated")
-            self.process.wait()
-            self.process = None
-
-            # kill any pianobar instance that exists
-            subprocess.call("pkill pianobar", shell=True)
-
     def stop(self):
         if self.process:
             self.pause_song()
-            LOGGER.info("Pianobar Skill will terminate in an ten mins " +
-                        "if no pianobar commands are given")
-            try:
-                self.terminate_timer.cancel()
-            except Exception as e:
-                LOGGER.info(e)
-
-            self.piano_bar_state = "stop"
-            self.terminate_timer = Timer(600, self.terminate_process)
-            self.terminate_timer.daemon = True
-            self.terminate_timer.start()
 
 
 def create_skill():
