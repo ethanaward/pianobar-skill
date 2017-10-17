@@ -38,7 +38,7 @@ __author__ = 'eward, MichaelNguyen'
 LOGGER = getLogger(__name__)
 
 
-#TODO: handle for bad email and password
+# TODO: handle for bad email and password
 class PianobarSkill(MycroftSkill):
     def __init__(self):
         super(PianobarSkill, self).__init__(name="PianobarSkill")
@@ -163,11 +163,11 @@ class PianobarSkill(MycroftSkill):
             libao_path = expanduser('~/.libao')
             platform = self.config_core['enclosure'].get('platform')
             if platform == 'picroft' or platform == 'mycroft_mark_1':
-                if !isfile(libao_path):
+                if not isfile(libao_path):
                     with open(libao_path, 'w') as f:
                         f.write('dev=0\ndefault_driver=pulse')
-                    self.speak("pianobar is configured. please reboot to activate pandora")
-
+                    self.speak("pianobar is configured. please " +
+                               "reboot to activate pandora")
 
     def _load_vocab_files(self):
         """
