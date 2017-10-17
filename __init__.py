@@ -39,6 +39,7 @@ LOGGER = getLogger(__name__)
 
 
 # TODO: handle for bad email and password
+# TODO: change timer to use base class timer
 class PianobarSkill(MycroftSkill):
     def __init__(self):
         super(PianobarSkill, self).__init__(name="PianobarSkill")
@@ -106,9 +107,9 @@ class PianobarSkill(MycroftSkill):
         """
             Necessary functions to setup skill
         """
+        self._poll_for_setup()
         self._configure_pianobar()
         self._load_vocab_files()
-        self._poll_for_setup()
 
     def _check_before(self, func):
         """
@@ -168,6 +169,10 @@ class PianobarSkill(MycroftSkill):
                         f.write('dev=0\ndefault_driver=pulse')
                     self.speak("pianobar is configured. please " +
                                "reboot to activate pandora")
+        else:
+            t = Timer(2, self._configure_pianobar)
+            t.daemon = True
+            t.start()
 
     def _load_vocab_files(self):
         """
