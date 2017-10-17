@@ -38,15 +38,15 @@ __author__ = 'eward, MichaelNguyen'
 LOGGER = getLogger(__name__)
 
 
+#TODO: handle for bad email and password
 class PianobarSkill(MycroftSkill):
     def __init__(self):
         super(PianobarSkill, self).__init__(name="PianobarSkill")
         self.process = None
         self.piano_bar_state = None
         self.current_station = None
+        self._is_setup = False
         self.vocabs = []
-        self.terminate_timer = None
-        self.display_timer = None
         self.pianobar_path = expanduser('~/.config/pianobar')
 
     def initialize(self):
@@ -108,6 +108,7 @@ class PianobarSkill(MycroftSkill):
         """
         self._configure_pianobar()
         self._load_vocab_files()
+        self._poll_for_setup()
 
     def _check_before(self, func):
         """
@@ -118,22 +119,23 @@ class PianobarSkill(MycroftSkill):
         else:
             self.speak("Pandora is not playing")
 
-    def _is_setup(self):
+    def _poll_for_setup(self):
         try:
             if self.settings["email"] != "" or self.settings["password"] != "":
-                return True
+                self._is_setup = True
             else:
-                return False
+                t = Timer(2, self._poll_for_setup)
+                t.daemon = True
+                t.start()
         except Exception as e:
             LOGGER.error(e)
-            return False
 
     def _configure_pianobar(self):
         """
             Initiates pianobar configurations.
             ie account info, tls key, audio quality
         """
-        if self._is_setup():
+        if self._is_setup:
             if not exists(self.pianobar_path):
                 makedirs(self.pianobar_path)
 
@@ -158,6 +160,14 @@ class PianobarSkill(MycroftSkill):
                                       self.settings["email"],
                                       self.settings["password"],
                                       self._dir + '/event_command.py'))
+            libao_path = expanduser('~/.libao')
+            platform = self.config_core['enclosure'].get('platform')
+            if platform == 'picroft' or platform == 'mycroft_mark_1':
+                if !isfile(libao_path):
+                    with open(libao_path, 'w') as f:
+                        f.write('dev=0\ndefault_driver=pulse')
+                    self.speak("pianobar is configured. please reboot to activate pandora")
+
 
     def _load_vocab_files(self):
         """
@@ -189,8 +199,9 @@ class PianobarSkill(MycroftSkill):
                 LOGGER.error(e)
             time.sleep(0.1)
             self.enclosure.mouth_text(self.settings["title"])
-
-        Timer(2, self._check_for_pianobar_event).start()
+        t = Timer(2, self._check_for_pianobar_event)
+        t.daemon = True
+        t.start()
 
     def _load_current_info(self):
         """
@@ -266,7 +277,7 @@ class PianobarSkill(MycroftSkill):
                 self.piano_bar_state = "play"
 
     def play_pandora(self, message=None):
-        if self._is_setup():
+        if self._is_setup:
             station = self._get_station(message.data["utterance"])
             self._start_pianobar()
             if station is not None:
@@ -297,7 +308,7 @@ class PianobarSkill(MycroftSkill):
         self.piano_bar_state = "play"
 
     def play_station(self, message=None):
-        if self._is_setup():
+        if self._is_setup:
             utterance = message.data["utterance"]
             station = self._get_station(utterance)
 
