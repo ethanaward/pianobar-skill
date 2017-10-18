@@ -14,8 +14,8 @@ apt-get -y install pianobar
 For picroft and mark 1 the skill should automatically set the appropriate drivers. For desktop in my experiences it doesn't need it. If you want to double check and do it manually do these steps:
 
 ```
-echo default_driver=pulse > ~/.libao.conf
-echo dev=0 >> ~/.libao.conf
+echo default_driver=pulse > ~/.libao
+echo dev=0 >> ~/.libao
 ```
 
 #### Skill installation
