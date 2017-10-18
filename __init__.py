@@ -122,7 +122,8 @@ class PianobarSkill(MycroftSkill):
 
     def _poll_for_setup(self):
         try:
-            if self.settings["email"] != "" or self.settings["password"] != "":
+            if self.settings.get("email", "") or \
+               self.settings.get("password", ""):
                 self._is_setup = True
             else:
                 t = Timer(2, self._poll_for_setup)
