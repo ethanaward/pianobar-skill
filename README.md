@@ -7,20 +7,23 @@ To use the Pandora ( Pianobar ) skill you'll first need to install Pianobar and 
 #### First install pianobar package
 
 ```
-sudo su
 apt-get update
 apt-get -y install pianobar
 ```
 
-Now you need to set Pianobar to use the appropriate drivers. Edit the file '/etc/libao.conf' :
+For picroft and mark 1 the skill should automatically set the appropriate drivers. For desktop in my experiences it doesn't need it. If you want to double check and do it manually do these steps:
 
 ```
-echo default_driver=pulse > /etc/libao.conf
-echo dev=0 >> /etc/libao.conf
-exit
+echo default_driver=pulse > ~/.libao.conf
+echo dev=0 >> ~/.libao.conf
 ```
+
 #### Skill installation
-You can install via MSM or git clone this project into the mycroft skills directory usually found in /opt/mycroft/skills
+You can install via voice, MSM or git clone this project into the mycroft skills directory usually found in /opt/mycroft/skills
+
+
+##### Voice
+Hey mycroft... install pandora
 
 ##### MSM
 This will install the requirements for you. 
@@ -51,9 +54,13 @@ pip install -r requirements.txt
 ```
 
 #### Setting up Pandora Account
+If you are on 0.9.1 you can leverage the Web skill settings feature. Go to home.mycroft.ai and go to the skills tab to input your credentials. If you do not have that image, you can manually create the settings.json file and input your information.
 
-There is a settings.json file, you can either edit it yourself or if you can go to home.mycroft.ai, go to skills tab, and input your credentials there.
+```
+    vim settings.json
+```
 
+create a json structure that looks like this
 
 ```
 {
@@ -69,10 +76,10 @@ On Mark 1 and Picroft
 sudo service mycroft-skills restart
 ```
 
-On Desktop
+On Desktop for 0.9.1+
 
 ```
-./mycroft.sh start
+./start-mycroft.sh debug
 ```
 
 Now say "Hey Mycroft....play pandora"
