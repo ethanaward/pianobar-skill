@@ -108,7 +108,7 @@ Now say "Hey Mycroft....play pandora"
 
 6. Change Stations
     
-       example "Hey Mycroft... change station to Today's Top Hits"
+       example "Hey Mycroft... change station to Today's Top Hits on pandora"
 
 7. Next Station
        
