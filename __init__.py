@@ -296,7 +296,7 @@ class PianobarSkill(MycroftSkill):
     def next_song(self, message=None):
         self.process.stdin.write("n")
         self.piano_bar_state = "play"
-        
+
     def next_station(self, message=None):
         station_count = self.settings["station_count"]
         current_station = int(self.current_station)
