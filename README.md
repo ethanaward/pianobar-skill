@@ -9,10 +9,12 @@ You can install via voice, MSM or git clone this project into the mycroft skills
 
 
 ##### Voice
+This will install the pip requirements for you.
+
 Hey mycroft... install pandora
 
 ##### MSM
-This will install the requirements for you. 
+This will install the pip requirements for you. 
 
 ```
 msm install pandora
