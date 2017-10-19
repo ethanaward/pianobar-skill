@@ -67,7 +67,7 @@ echo dev=0 >> ~/.libao
 If you are on 0.9.1 you can leverage the Web skill settings feature. Go to home.mycroft.ai and go to the skills tab to input your credentials. If you do not have that image, you can manually create the settings.json file and input your information.
 
 ```
-    vim settings.json
+vim settings.json
 ```
 
 create a json structure that looks like this
