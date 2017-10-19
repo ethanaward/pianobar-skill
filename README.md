@@ -12,7 +12,7 @@ You can install via voice, MSM or git clone this project into the mycroft skills
 This will install the pip requirements for you.
 
 ```
-Hey mycroft... install pandora
+"Hey mycroft... install pandora"
 ```
 
 ##### MSM
