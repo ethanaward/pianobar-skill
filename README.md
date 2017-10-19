@@ -7,6 +7,12 @@ To use the Pandora ( Pianobar ) skill you'll first need to install Pianobar and 
 #### First install pianobar package
 
 ```
+bash requirements.sh
+```
+
+or
+
+```
 apt-get update
 apt-get -y install pianobar
 ```
