@@ -4,26 +4,6 @@ This skill should work with Mycroft version 0.8.18 +
 
 To use the Pandora ( Pianobar ) skill you'll first need to install Pianobar and configure it to work with your account.
 
-#### First install pianobar package
-
-```
-bash requirements.sh
-```
-
-or
-
-```
-apt-get update
-apt-get -y install pianobar
-```
-
-For picroft and mark 1 the skill should automatically set the appropriate drivers. For desktop in my experiences it doesn't need it. If you want to double check and do it manually do these steps:
-
-```
-echo default_driver=pulse > ~/.libao
-echo dev=0 >> ~/.libao
-```
-
 #### Skill installation
 You can install via voice, MSM or git clone this project into the mycroft skills directory usually found in /opt/mycroft/skills
 
@@ -57,6 +37,26 @@ Install the skill requirements from the requirements.txt
 
 ```
 pip install -r requirements.txt
+```
+
+#### Install pianobar package
+
+```
+bash requirements.sh
+```
+
+or
+
+```
+apt-get update
+apt-get -y install pianobar
+```
+
+For picroft and mark 1 the skill should automatically set the appropriate drivers. For desktop in my experiences it doesn't need it. If you want to double check and do it manually do these steps:
+
+```
+echo default_driver=pulse > ~/.libao
+echo dev=0 >> ~/.libao
 ```
 
 #### Setting up Pandora Account
