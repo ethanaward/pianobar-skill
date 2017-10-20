@@ -49,7 +49,7 @@ pip install -r requirements.txt
 If you are using the new mark 1 and picroft images, as of 10/19/2017, you should be able to just do a skill installation 
 and msm would automatically install pianobar using polkit. 
 
-#### Old mycroft images and ubunutu
+##### Old mycroft images and ubunutu
 
 ```
 bash requirements.sh
