@@ -6,5 +6,5 @@ found_exe() {
 # polkit uses pkcon instead of apt-get
 # pkcon runs apt-get in the background
 if found_exe apt-get; then
-    pckon install pianobar -y
+    pkcon install pianobar -y
 fi
