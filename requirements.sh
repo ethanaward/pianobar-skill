@@ -6,3 +6,4 @@ found_exe() {
 
 if found_exe apt-get; then
     apt-get install pianobar -y
+fi
