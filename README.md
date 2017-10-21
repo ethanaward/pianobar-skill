@@ -46,7 +46,7 @@ pip install -r requirements.txt
 #### Install pianobar package
 
 ##### New mycroft images
-If you are using the new mark 1 and picroft images, as of 10/19/2017, you should be able to just do a skill installation 
+If you are using the new [mark 1](https://drive.google.com/file/d/0Bzao3lLsdthPZTdRU3NCNTNVME0/view) and [picroft](https://drive.google.com/file/d/0Bzao3lLsdthPZUNneUg5djhtTGM/view) images, as of 10/19/2017, you should be able to just do a skill installation 
 and msm would automatically install pianobar using polkit. 
 
 ##### Old mycroft images and ubunutu
