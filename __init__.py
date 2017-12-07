@@ -100,7 +100,7 @@ class PianobarSkill(MycroftSkill):
         self.register_intent(list_stations_intent, handle_list)
 
         play_stations_intent = IntentBuilder("PandoraChangeStationIntent"). \
-            require("ChangeKeyword").optionally("StationKeyword").build()
+            require("ChangeKeyword").require("StationKeyword").build()
         self.register_intent(play_stations_intent, self.play_station)
 
     def _setup(self):
