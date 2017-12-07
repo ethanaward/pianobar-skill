@@ -1,32 +1,22 @@
 # Requirements
 
-This skill should work with Mycroft version 0.8.18 +
+This skill should work with Mycroft version 0.9.1 +
 
 To use the Pandora ( Pianobar ) skill you'll first need to install Pianobar and configure it to work with your account.
-
-#### First install pianobar package
-
-```
-apt-get update
-apt-get -y install pianobar
-```
-
-For picroft and mark 1 the skill should automatically set the appropriate drivers. For desktop in my experiences it doesn't need it. If you want to double check and do it manually do these steps:
-
-```
-echo default_driver=pulse > ~/.libao
-echo dev=0 >> ~/.libao
-```
 
 #### Skill installation
 You can install via voice, MSM or git clone this project into the mycroft skills directory usually found in /opt/mycroft/skills
 
 
 ##### Voice
-Hey mycroft... install pandora
+This will install the pip requirements for you.
+
+```
+"Hey mycroft... install pandora"
+```
 
 ##### MSM
-This will install the requirements for you. 
+This will install the pip requirements for you. 
 
 ```
 msm install pandora
@@ -53,11 +43,37 @@ Install the skill requirements from the requirements.txt
 pip install -r requirements.txt
 ```
 
+#### Install pianobar package
+
+##### New mycroft images
+If you are using the new [mark 1](https://drive.google.com/file/d/0Bzao3lLsdthPZTdRU3NCNTNVME0/view) and [picroft](https://drive.google.com/file/d/0Bzao3lLsdthPZUNneUg5djhtTGM/view) images, as of 10/19/2017, you should be able to just do a skill installation 
+and msm would automatically install pianobar using polkit. 
+
+##### Old mycroft images and ubunutu
+
+```
+bash requirements.sh
+```
+
+or
+
+```
+apt-get update
+apt-get -y install pianobar
+```
+
+For picroft and mark 1 the skill should automatically set the appropriate drivers. For desktop in my experiences it doesn't need it. If you want to double check and do it manually do these steps:
+
+```
+echo default_driver=pulse > ~/.libao
+echo dev=0 >> ~/.libao
+```
+
 #### Setting up Pandora Account
 If you are on 0.9.1 you can leverage the Web skill settings feature. Go to home.mycroft.ai and go to the skills tab to input your credentials. If you do not have that image, you can manually create the settings.json file and input your information.
 
 ```
-    vim settings.json
+vim settings.json
 ```
 
 create a json structure that looks like this
