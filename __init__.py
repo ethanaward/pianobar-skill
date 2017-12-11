@@ -28,14 +28,12 @@ from os import makedirs, remove, listdir, path
 from os.path import dirname, join, exists, expanduser, isfile, abspath
 from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
-from mycroft.util.log import getLogger
+from mycroft.util.log import LOG
 from threading import Timer
 from mycroft.util import wait_while_speaking
 from fuzzywuzzy import fuzz, process as fuzz_process
 
 __author__ = 'eward, MichaelNguyen'
-
-LOGGER = getLogger(__name__)
 
 
 # TODO: handle for bad email and password
@@ -130,7 +128,7 @@ class PianobarSkill(MycroftSkill):
                 t.daemon = True
                 t.start()
         except Exception as e:
-            LOGGER.error(e)
+            LOG.error(e)
 
     def _configure_pianobar(self):
         """
@@ -190,7 +188,7 @@ class PianobarSkill(MycroftSkill):
                             self.vocabs.append(vocab)
 
         else:
-            LOGGER.error('No vocab loaded, ' + vocab_dir + ' does not exist')
+            LOG.error('No vocab loaded, ' + vocab_dir + ' does not exist')
 
     def _check_for_pianobar_event(self):
         """
@@ -202,7 +200,7 @@ class PianobarSkill(MycroftSkill):
             try:
                 remove(info_ready_path)
             except Exception as e:
-                LOGGER.error(e)
+                LOG.error(e)
             time.sleep(0.1)
             self.enclosure.mouth_text(self.settings["title"])
         t = Timer(2, self._check_for_pianobar_event)
@@ -229,7 +227,7 @@ class PianobarSkill(MycroftSkill):
             station = "station" + str(index)
             self.settings["stations"].append((info[station], index))
 
-        LOGGER.info(self.settings["stations"])
+        LOG.info(self.settings["stations"])
         self.settings.store()
 
     def _start_pianobar(self):
@@ -241,6 +239,7 @@ class PianobarSkill(MycroftSkill):
         self.current_station = "0"
         self.process.stdin.write("0\n")
         self.piano_bar_state = "play"
+        self.pause_song()
 
     def _get_station(self, utterance):
         """
@@ -260,19 +259,23 @@ class PianobarSkill(MycroftSkill):
             stations = [station[0] for station in self.settings["stations"]]
             probabilities = fuzz_process.extractOne(
                 utterance, stations, scorer=fuzz.ratio)
-            LOGGER.info(probabilities)
+            LOG.info(probabilities)
             if probabilities[1] > 70:
                 station = probabilities[0]
                 return station
             else:
                 return None
         except Exception as e:
-            LOGGER.info(e)
+            LOG.info(e)
             return None
 
-    def _play_station(self, station):
-        self.speak("playing {} ".format(station))
-        wait_while_speaking()
+    def play_last_stationed(self):
+        return self.settings.get("last_played")
+
+    def _play_station(self, station, speak=True):
+        if speak:
+            self.speak("playing {} ".format(station))
+            wait_while_speaking()
         for channels in self.settings["stations"]:
             if station == channels[0]:
                 wait_while_speaking()
@@ -281,16 +284,26 @@ class PianobarSkill(MycroftSkill):
                 station_number = str(channels[1]) + "\n"
                 self.process.stdin.write(station_number)
                 self.piano_bar_state = "play"
+                self.settings["last_played"] = channels
 
     def play_pandora(self, message=None):
         if self._is_setup:
             station = self._get_station(message.data["utterance"])
+            LOG.info(station)
             self._start_pianobar()
             if station is not None:
                 self._play_station(station)
             else:
-                self.speak("playing pandora")
-                wait_while_speaking()
+                last_played = self.settings.get("last_played")
+                if last_played:
+                    self.speak_dialog(
+                        "play.last.station",
+                        data={"station": last_played[0]})
+                    self._play_station(last_played[0], speak=False)
+                else:
+                    self.speak("playing pandora")
+                    wait_while_speaking()
+                    self.resume_song()
         else:
             self.speak("Please go to home.mycroft.ai to register pandora")
 
@@ -330,8 +343,8 @@ class PianobarSkill(MycroftSkill):
                 self.pause_song()
 
             if station is not None:
-                if self.process is None:
-                    self._start_pianobar()
+                # if self.process is None:
+                self._start_pianobar()
 
                 self._play_station(station)
             else:
