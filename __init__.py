@@ -46,7 +46,8 @@ class PianobarSkill(MycroftSkill):
         self.current_station = None
         self._is_setup = False
         self.vocabs = []
-        self.pianobar_path = expanduser('~/.config/pianobar')
+        self.pianobar_path = expanduser('~/.config/pianobar')    
+        self._pianobar_initated = False
 
     def initialize(self):
         self.load_data_files(dirname(__file__))
@@ -168,6 +169,8 @@ class PianobarSkill(MycroftSkill):
                         f.write('dev=0\ndefault_driver=pulse')
                     self.speak("pianobar is configured. please " +
                                "reboot to activate pandora")
+
+            self._init_pianobar()
         else:
             t = Timer(2, self._configure_pianobar)
             t.daemon = True
@@ -202,10 +205,25 @@ class PianobarSkill(MycroftSkill):
             except Exception as e:
                 LOG.error(e)
             time.sleep(0.1)
-            self.enclosure.mouth_text(self.settings["title"])
+            if self._pianobar_initated:
+                self.enclosure.mouth_text(self.settings["title"])
         t = Timer(2, self._check_for_pianobar_event)
         t.daemon = True
         t.start()
+
+    def _init_pianobar(self):
+        LOG.info("INIT PIANOBAR")
+        self._start_pianobar()
+        subprocess.call("pkill pianobar", shell=True)
+        self.process = subprocess.Popen(["pianobar"],
+                                        stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE)
+        time.sleep(3)
+        self.process.stdin.write("0\n")
+        self.process.stdin.write("S")
+        time.sleep(1)
+        self.process.kill()
+        self.process = None
 
     def _load_current_info(self):
         """
@@ -238,7 +256,6 @@ class PianobarSkill(MycroftSkill):
                                         stdout=subprocess.PIPE)
         self.current_station = "0"
         self.process.stdin.write("0\n")
-        self.piano_bar_state = "play"
         self.pause_song()
 
     def _get_station(self, utterance):
@@ -289,8 +306,8 @@ class PianobarSkill(MycroftSkill):
     def play_pandora(self, message=None):
         if self._is_setup:
             station = self._get_station(message.data["utterance"])
-            LOG.info(station)
             self._start_pianobar()
+            LOG.info(station)
             if station is not None:
                 self._play_station(station)
             else:
@@ -299,11 +316,13 @@ class PianobarSkill(MycroftSkill):
                     self.speak_dialog(
                         "play.last.station",
                         data={"station": last_played[0]})
+                    self.pause_song()
                     self._play_station(last_played[0], speak=False)
                 else:
                     self.speak("playing pandora")
                     wait_while_speaking()
-                    self.resume_song()
+                    self._play_station(
+                        self.settings["stations"][0][0], speak=False)
         else:
             self.speak("Please go to home.mycroft.ai to register pandora")
 
@@ -355,12 +374,13 @@ class PianobarSkill(MycroftSkill):
         else:
             self.speak("Please go to home.mycroft.ai to register pandora")
 
+    # TODO: use converse for this
     def list_stations(self, message=None):
         self.pause_song()
-        time_pause = 5
 
+        time_pause = 5
         if len(self.settings["stations"]) >= 4:
-            list_station_dialog = "top 4 subscribed pandora stations are "
+            list_station_dialog = "subscribed pandora stations are "
         else:
             list_station_dialog = "subscribed pandora stations are "
 

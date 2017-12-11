@@ -60,3 +60,8 @@ if event == 'songstart':
     pianobar_path = join(expanduser('~/.config/pianobar'), 'info_ready')
     with open(pianobar_path, 'w+') as f:
         pass
+# elif event == "userlogin":
+#     with open("./settings.json", "w") as f:
+#         settings = json.load(f)
+#         settings["info"] = str(info)
+#         json.dump(settings, f)
