@@ -6,6 +6,10 @@
                 "name": "Login",
                 "fields": [
                     {
+                        "type": "label",
+                        "label": "Please input your email and password associated with your Pandora account."
+                    },
+                    {
                         "name": "email",
                         "type": "email",
                         "label": "Email",
