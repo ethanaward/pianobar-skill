@@ -212,18 +212,20 @@ class PianobarSkill(MycroftSkill):
         t.start()
 
     def _init_pianobar(self):
-        LOG.info("INIT PIANOBAR")
-        self._start_pianobar()
-        subprocess.call("pkill pianobar", shell=True)
-        self.process = subprocess.Popen(["pianobar"],
-                                        stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE)
-        time.sleep(3)
-        self.process.stdin.write("0\n")
-        self.process.stdin.write("S")
-        time.sleep(1)
-        self.process.kill()
-        self.process = None
+        try:
+            LOG.info("INIT PIANOBAR")
+            subprocess.call("pkill pianobar", shell=True)
+            self.process = subprocess.Popen(["pianobar"],
+                                            stdin=subprocess.PIPE,
+                                            stdout=subprocess.PIPE)
+            time.sleep(3)
+            self.process.stdin.write("0\n")
+            self.process.stdin.write("S")
+            time.sleep(0.5)
+            self.process.kill()
+            self.process = None
+        except:
+            self.speak_dialog('wrong.credentials')
 
     def _load_current_info(self):
         """
@@ -249,14 +251,17 @@ class PianobarSkill(MycroftSkill):
         self.settings.store()
 
     def _start_pianobar(self):
-        subprocess.call("pkill pianobar", shell=True)
-        # start pandora
-        self.process = subprocess.Popen(["pianobar"],
-                                        stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE)
-        self.current_station = "0"
-        self.process.stdin.write("0\n")
-        self.pause_song()
+        try:
+            subprocess.call("pkill pianobar", shell=True)
+            # start pandora
+            self.process = subprocess.Popen(["pianobar"],
+                                            stdin=subprocess.PIPE,
+                                            stdout=subprocess.PIPE)
+            self.current_station = "0"
+            self.process.stdin.write("0\n")
+            self.pause_song()
+        except:
+            self.speak_dialog('wrong.credentials')
 
     def _get_station(self, utterance):
         """
