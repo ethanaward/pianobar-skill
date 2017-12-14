@@ -260,6 +260,8 @@ class PianobarSkill(MycroftSkill):
             self.current_station = "0"
             self.process.stdin.write("0\n")
             self.pause_song()
+            time.sleep(2)
+            self._load_current_info()
         except:
             self.speak_dialog('wrong.credentials')
 
@@ -310,8 +312,8 @@ class PianobarSkill(MycroftSkill):
 
     def play_pandora(self, message=None):
         if self._is_setup:
-            station = self._get_station(message.data["utterance"])
             self._start_pianobar()
+            station = self._get_station(message.data["utterance"])
             LOG.info(station)
             if station is not None:
                 self._play_station(station)
