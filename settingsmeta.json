@@ -8,7 +8,7 @@
                 "fields": [
                     {
                         "type": "label",
-                        "label": "Please input your email and password associated with your Pandora account."
+                        "label": "Please input your email and password associated with your Pandora account. It may take up to a minute for the settings to sync."
                     },
                     {
                         "name": "email",
