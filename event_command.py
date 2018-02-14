@@ -59,7 +59,7 @@ if event == 'songstart':
     # a directory instead of a file path
     # date: 02-18
     if isdir(now_playing):
-        shutil.rmtree(info_path)
+        shutil.rmtree(now_playing)
 
     with open(now_playing, 'w') as f:
         json.dump(song_dict, f)
