@@ -25,7 +25,8 @@ import subprocess
 import json
 import time
 from os import makedirs, remove, listdir, path
-from os.path import dirname, join, exists, expanduser, isfile, abspath
+from os.path import dirname, join, exists, expanduser, isfile, abspath, isdir
+import shutil
 from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
 from mycroft.util.log import LOG
@@ -232,6 +233,14 @@ class PianobarSkill(MycroftSkill):
             loads information emit by pianobar
         """
         info_path = join(self.pianobar_path, 'info')
+
+        # this is a hack to remove the info_path
+        # if it's a directory. An earlier version
+        # of code may sometimes create info_path as
+        # a directory instead of a file path
+        # date: 02-18
+        if isdir(info_path):
+            shutil.rmtree(info_path)
 
         if not exists(info_path):
             with open(info_path, 'w+'):

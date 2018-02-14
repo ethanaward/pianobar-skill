@@ -25,7 +25,8 @@
 import os
 import sys
 import json
-from os.path import expanduser, join, abspath
+import shutil
+from os.path import expanduser, join, abspath, isdir
 from threading import Thread
 """
     This module is used as a callback for pianobar events. pianobar
@@ -51,6 +52,14 @@ if event == 'songstart':
     for item in info:
         item = item.split("=")
         song_dict[item[0]] = item[1].rstrip()
+
+    # this is a hack to remove the info_path
+    # if it's a directory. An earlier version
+    # of code may sometimes create info_path as
+    # a directory instead of a file path
+    # date: 02-18
+    if isdir(now_playing):
+        shutil.rmtree(info_path)
 
     with open(now_playing, 'w') as f:
         json.dump(song_dict, f)
