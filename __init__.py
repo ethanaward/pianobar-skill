@@ -46,7 +46,7 @@ class PianobarSkill(MycroftSkill):
         self.current_station = None
         self._is_setup = False
         self.vocabs = []
-        self.pianobar_path = expanduser('~/.config/pianobar')    
+        self.pianobar_path = expanduser('~/.config/pianobar')
         self._pianobar_initated = False
 
     def initialize(self):
@@ -54,6 +54,10 @@ class PianobarSkill(MycroftSkill):
         self._setup()
         self._check_for_pianobar_event()
 
+    def _register_all_intents(self):
+        """ Intents should only be registered once settings are inputed
+            to avoid conflicts with other music skills
+        """
         def handle_pause(message=None):
             return self._check_before(
                 lambda: self.pause_song(message))
@@ -107,7 +111,6 @@ class PianobarSkill(MycroftSkill):
             Necessary functions to setup skill
         """
         self._poll_for_setup()
-        self._configure_pianobar()
         self._load_vocab_files()
 
     def _check_before(self, func):
@@ -120,13 +123,15 @@ class PianobarSkill(MycroftSkill):
             self.speak("Pandora is not playing")
 
     def _poll_for_setup(self):
+        email = self.settings.get("email", "")
+        password = self.settings.get("password", "")
         try:
-            if self.settings.get("email", "") or \
-               self.settings.get("password", ""):
+            if email and password:
                 self._is_setup = True
+                self._register_all_intents()
+                self._configure_pianobar()
             else:
                 t = Timer(2, self._poll_for_setup)
-                t.daemon = True
                 t.start()
         except Exception as e:
             LOG.error(e)
@@ -171,10 +176,6 @@ class PianobarSkill(MycroftSkill):
                                "reboot to activate pandora")
 
             self._init_pianobar()
-        else:
-            t = Timer(2, self._configure_pianobar)
-            t.daemon = True
-            t.start()
 
     def _load_vocab_files(self):
         """
@@ -208,7 +209,6 @@ class PianobarSkill(MycroftSkill):
             if self._pianobar_initated:
                 self.enclosure.mouth_text(self.settings["title"])
         t = Timer(2, self._check_for_pianobar_event)
-        t.daemon = True
         t.start()
 
     def _init_pianobar(self):
@@ -234,18 +234,21 @@ class PianobarSkill(MycroftSkill):
         info_path = join(self.pianobar_path, 'info')
 
         if not exists(info_path):
-            makedirs(info_path)
+            with open(info_path, 'w+'):
+                pass
 
         with open(info_path, 'r') as f:
             info = json.load(f)
 
         self.settings["title"] = info["title"]
         self.settings["station_name"] = info["stationName"]
+        LOG.info(self.settings['station_name'])
         self.settings["station_count"] = int(info["stationCount"])
         self.settings["stations"] = []
         for index in range(self.settings["station_count"]):
             station = "station" + str(index)
-            self.settings["stations"].append((info[station], index))
+            self.settings["stations"].append(
+                (info[station].replace("Radio", ""), index))
 
         LOG.info(self.settings["stations"])
         self.settings.store()
