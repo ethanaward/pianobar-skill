@@ -216,9 +216,8 @@ class PianobarSkill(MycroftSkill):
         try:
             LOG.info("INIT PIANOBAR")
             subprocess.call("pkill pianobar", shell=True)
-            self.process = subprocess.Popen(["pianobar"],
-                                            stdin=subprocess.PIPE,
-                                            stdout=subprocess.PIPE)
+            self.process = \
+                subprocess.Popen(["pianobar"], stdin=subprocess.PIPE)
             time.sleep(3)
             self.process.stdin.write("0\n")
             self.process.stdin.write("S")
@@ -266,9 +265,8 @@ class PianobarSkill(MycroftSkill):
         try:
             subprocess.call("pkill pianobar", shell=True)
             # start pandora
-            self.process = subprocess.Popen(["pianobar"],
-                                            stdin=subprocess.PIPE,
-                                            stdout=subprocess.PIPE)
+            self.process = \
+                subprocess.Popen(["pianobar"], stdin=subprocess.PIPE)
             self.current_station = "0"
             self.process.stdin.write("0\n")
             self.pause_song()
