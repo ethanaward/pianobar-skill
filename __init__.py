@@ -443,7 +443,7 @@ class PianobarSkill(MycroftSkill):
 
     def shutdown(self):
         self.process.kill()
-        super(MycroftSkill, self).shutdown()
+        super(PianobarSkill, self).shutdown()
 
 
 def create_skill():
