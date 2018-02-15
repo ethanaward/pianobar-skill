@@ -109,11 +109,13 @@ class PianobarSkill(MycroftSkill):
         self.register_intent(play_stations_intent, self.play_station)
 
         on_debug_intent = IntentBuilder("PandoraOnDebugIntent"). \
-            require("on").require("debug").require("PandoraKeyword").build()
+            require("onPandora").require("debugPandora").\
+            require("PandoraKeyword").build()
         self.register_intent(on_debug_intent, self.debug_on_intent)
 
-        off_debug_intent = IntentBuilder("PandoraOnDebugIntent"). \
-            require("off").require("debug").require("PandoraKeyword").build()
+        off_debug_intent = IntentBuilder("PandoraOffDebugIntent"). \
+            require("offPandora").require("debugPandora"). \
+            require("PandoraKeyword").build()
         self.register_intent(off_debug_intent, self.debug_off_intent)
 
     def _setup(self):
@@ -433,9 +435,11 @@ class PianobarSkill(MycroftSkill):
 
     def debug_on_intent(self, message=None):
         self.std_output = True
+        self.speak("turning on pandora's debug")
 
     def debug_off_intent(self, message=None):
         self.std_output = False
+        self.speak("turning off pandora's debug")
 
     def shutdown(self):
         self.process.kill()
