@@ -442,7 +442,7 @@ class PianobarSkill(MycroftSkill):
         self.speak("turning off pandora's debug")
 
     def shutdown(self):
-        self.process.kill()
+        subprocess.call("pkill pianobar", shell=True)
         super(PianobarSkill, self).shutdown()
 
 
