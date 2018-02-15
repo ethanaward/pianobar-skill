@@ -49,6 +49,7 @@ class PianobarSkill(MycroftSkill):
         self.vocabs = []
         self.pianobar_path = expanduser('~/.config/pianobar')
         self._pianobar_initated = False
+        self.std_output = False
 
     def initialize(self):
         self.load_data_files(dirname(__file__))
@@ -92,11 +93,11 @@ class PianobarSkill(MycroftSkill):
         self.register_intent(next_station_intent, handle_next_station)
 
         pause_song_intent = IntentBuilder("PandoraPauseIntent"). \
-            require("PauseKeyword").build()
+            require("PauseKeyword").require("PandoraKeyword").build()
         self.register_intent(pause_song_intent, handle_pause)
 
         resume_song_intent = IntentBuilder("PandoraResumeIntent"). \
-            require("ResumeKeyword").build()
+            require("ResumeKeyword").require("PandoraKeyword").build()
         self.register_intent(resume_song_intent, handle_resume)
 
         list_stations_intent = IntentBuilder("PandoraListStationIntent"). \
@@ -107,12 +108,22 @@ class PianobarSkill(MycroftSkill):
             require("ChangeKeyword").require("StationKeyword").build()
         self.register_intent(play_stations_intent, self.play_station)
 
+        on_debug_intent = IntentBuilder("PandoraOnDebugIntent"). \
+            require("on").require("debug").require("PandoraKeyword").build()
+        self.register_intent(on_debug_intent, self.debug_on_intent)
+
+        off_debug_intent = IntentBuilder("PandoraOnDebugIntent"). \
+            require("off").require("debug").require("PandoraKeyword").build()
+        self.register_intent(off_debug_intent, self.debug_off_intent)
+
     def _setup(self):
         """
             Necessary functions to setup skill
         """
         self._poll_for_setup()
         self._load_vocab_files()
+        if self.settings.get('first_init') is None:
+            self._init_pianobar()
 
     def _check_before(self, func):
         """
@@ -176,8 +187,6 @@ class PianobarSkill(MycroftSkill):
                     self.speak("pianobar is configured. please " +
                                "reboot to activate pandora")
 
-            self._init_pianobar()
-
     def _load_vocab_files(self):
         """
             load vocabs into self
@@ -216,14 +225,16 @@ class PianobarSkill(MycroftSkill):
         try:
             LOG.info("INIT PIANOBAR")
             subprocess.call("pkill pianobar", shell=True)
-            self.process = \
-                subprocess.Popen(["pianobar"], stdin=subprocess.PIPE)
+            self.process = subprocess.Popen(["pianobar"],
+                                            stdin=subprocess.PIPE,
+                                            stdout=subprocess.PIPE)
             time.sleep(3)
             self.process.stdin.write("0\n")
             self.process.stdin.write("S")
             time.sleep(0.5)
             self.process.kill()
             self.process = None
+            self.settings['first_init'] = False
         except:
             self.speak_dialog('wrong.credentials')
 
@@ -265,8 +276,13 @@ class PianobarSkill(MycroftSkill):
         try:
             subprocess.call("pkill pianobar", shell=True)
             # start pandora
-            self.process = \
-                subprocess.Popen(["pianobar"], stdin=subprocess.PIPE)
+            if self.std_output:
+                self.process = \
+                    subprocess.Popen(["pianobar"], stdin=subprocess.PIPE)
+            else:
+                self.process = subprocess.Popen(["pianobar"],
+                                                stdin=subprocess.PIPE,
+                                                stdout=subprocess.PIPE)
             self.current_station = "0"
             self.process.stdin.write("0\n")
             self.pause_song()
@@ -414,6 +430,16 @@ class PianobarSkill(MycroftSkill):
     def stop(self):
         if self.process:
             self.pause_song()
+
+    def debug_on_intent(self, message=None):
+        self.std_output = True
+
+    def debug_off_intent(self, message=None):
+        self.std_output = False
+
+    def shutdown(self):
+        self.process.kill()
+        super(MycroftSkill, self).shutdown()
 
 
 def create_skill():
