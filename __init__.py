@@ -351,7 +351,7 @@ class PianobarSkill(MycroftSkill):
                     self.speak_dialog(
                         "play.last.station",
                         data={"station": last_played[0]})
-                    self.pause_song()
+                    # self.pause_song()
                     self._play_station(last_played[0], speak=False)
                 else:
                     self.speak("playing pandora")
