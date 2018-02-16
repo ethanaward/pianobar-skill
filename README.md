@@ -117,6 +117,6 @@ Debug mode will allow pianobar to write to the mycroft-cli. There you can see a 
 
 #### Song is not playing
 * You may be in paused mode after invoking 'play pandora'. Simply say 'resume pandora'
-* Sometimes you will pandora will deny access to their streaming service. This can be resolve over time. I've
+* Sometimes pandora will deny access to their streaming service. This can be resolve by just waiting for some time. I've
   notice if i have multiple devices playing pandora at once. To see if this is your issue, turn on debug mode, 
   and you should see this message after invoking pandora 'Error: Access denied. Try again later.'
