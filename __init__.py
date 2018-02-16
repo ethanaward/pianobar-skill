@@ -49,7 +49,7 @@ class PianobarSkill(MycroftSkill):
         self.vocabs = []
         self.pianobar_path = expanduser('~/.config/pianobar')
         self._pianobar_initated = False
-        self.std_output = False
+        self.debug_mode = False
 
     def initialize(self):
         self.load_data_files(dirname(__file__))
@@ -263,22 +263,23 @@ class PianobarSkill(MycroftSkill):
 
         self.settings["title"] = info["title"]
         self.settings["station_name"] = info["stationName"]
-        LOG.info(self.settings['station_name'])
+        if self.debug_mode:
+            LOG.info(self.settings['station_name'])
         self.settings["station_count"] = int(info["stationCount"])
         self.settings["stations"] = []
         for index in range(self.settings["station_count"]):
             station = "station" + str(index)
             self.settings["stations"].append(
                 (info[station].replace("Radio", ""), index))
-
-        LOG.info(self.settings["stations"])
+        if self.debug_mode:
+            LOG.info(self.settings["stations"])
         self.settings.store()
 
     def _start_pianobar(self):
         try:
             subprocess.call("pkill pianobar", shell=True)
             # start pandora
-            if self.std_output:
+            if self.debug_mode:
                 self.process = \
                     subprocess.Popen(["pianobar"], stdin=subprocess.PIPE)
             else:
@@ -311,7 +312,8 @@ class PianobarSkill(MycroftSkill):
             stations = [station[0] for station in self.settings["stations"]]
             probabilities = fuzz_process.extractOne(
                 utterance, stations, scorer=fuzz.ratio)
-            LOG.info(probabilities)
+            if self.debug_mode:
+                LOG.info(probabilities)
             if probabilities[1] > 70:
                 station = probabilities[0]
                 return station
@@ -342,7 +344,8 @@ class PianobarSkill(MycroftSkill):
         if self._is_setup:
             self._start_pianobar()
             station = self._get_station(message.data["utterance"])
-            LOG.info(station)
+            if self.debug_mode:
+                LOG.info(station)
             if station is not None:
                 self._play_station(station)
             else:
@@ -434,11 +437,11 @@ class PianobarSkill(MycroftSkill):
             self.pause_song()
 
     def debug_on_intent(self, message=None):
-        self.std_output = True
+        self.debug_mode = True
         self.speak("turning on pandora's debug")
 
     def debug_off_intent(self, message=None):
-        self.std_output = False
+        self.debug_mode = False
         self.speak("turning off pandora's debug")
 
     def shutdown(self):
