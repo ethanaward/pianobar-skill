@@ -46,8 +46,7 @@ pip install -r requirements.txt
 #### Install pianobar package
 
 ##### New mycroft images
-If you are using the new [mark 1](https://drive.google.com/file/d/0Bzao3lLsdthPZTdRU3NCNTNVME0/view) and [picroft](https://drive.google.com/file/d/0Bzao3lLsdthPZUNneUg5djhtTGM/view) images, as of 10/19/2017, you should be able to just do a skill installation 
-and msm would automatically install pianobar using polkit. 
+Mycroft core version 0.9.10 and up does not require you to install pianobar manually.
 
 ##### Old mycroft images and ubunutu
 
@@ -70,33 +69,7 @@ echo dev=0 >> ~/.libao
 ```
 
 #### Setting up Pandora Account
-If you are on 0.9.1 you can leverage the Web skill settings feature. Go to home.mycroft.ai and go to the skills tab to input your credentials. If you do not have that image, you can manually create the settings.json file and input your information.
-
-```
-vim settings.json
-```
-
-create a json structure that looks like this
-
-```
-{
-    "email": "YOUR PANDORA EMAIL LOGIN HERE",
-    "password": "YOUR PANDORA PASSWORD HERE"
-}
-```
-
-Once editing settings.json, the skill should reload from the mycroft MSM. If not, restart the skills service.
-
-On Mark 1 and Picroft
-```
-sudo service mycroft-skills restart
-```
-
-On Desktop for 0.9.1+
-
-```
-./start-mycroft.sh debug
-```
+Go to home.mycroft.ai to input your pandora credentials
 
 Now say "Hey Mycroft....play pandora"
 
