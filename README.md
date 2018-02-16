@@ -130,8 +130,20 @@ Now say "Hey Mycroft....play pandora"
        
        example "Hey Mycroft... next station"
 
+8. Debug mode
+
+       example "Hey Mycroft... turn on/off debug mode"
 
 More to come as this project is under active development. 
 
 ## Mycroft Pulse Audio Configuration
 Sometimes when you are listening to pandora, you want pandora to pause and resume automatically, when you are interacting with mycroft. Mycroft has an Audio service that can do that but currently is not turned on by default. You can find out how to do it here https://github.com/MycroftAI/mycroft-core/wiki/Audio-Service#pulse-audio-features
+
+## Troubleshooting
+Debug mode will allow pianobar to write to the mycroft-cli. There you can see a little bit more detail on what pianobar is doing under the hood.
+
+#### Song is not playing
+* You may be in paused mode after invoking 'play pandora'. Simply say 'resume pandora'
+* Sometimes you will pandora will deny access to their streaming service. This can be resolve over time. I've
+  notice if i have multiple devices playing pandora at once. To see if this is your issue, turn on debug mode, 
+  and you should see this message after invoking pandora 'Error: Access denied. Try again later.'
