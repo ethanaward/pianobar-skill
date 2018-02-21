@@ -51,6 +51,18 @@ class PianobarSkill(MycroftSkill):
         self._pianobar_initated = False
         self.debug_mode = False
 
+        # Initialize settings values
+        self.settings["email"] = ""
+        self.settings["password"] = ""
+        self.settings["song_artist"] = ""
+        self.settings["song_title"] = ""
+        self.settings["song_album"] = ""
+        self.settings["station_name"] = ""
+        self.settings["station_count"] = 0
+        self.settings["stations"] = []
+        self.settings["last_played"] = None
+        self.settings.get('first_init') = True  # True = first run ever
+
     def initialize(self):
         self.load_data_files(dirname(__file__))
         self._setup()
@@ -323,22 +335,23 @@ class PianobarSkill(MycroftSkill):
             LOG.info(e)
             return None
 
-    def play_last_stationed(self):
-        return self.settings.get("last_played")
+    def _play_station(self, station, dialog=None):
+        LOG.info("Starting: "+str(station))
+        if dialog:
+            self.speak_dialog(dialog, {"station": station})
+        else:
+            self.speak_dialog("playing.station", {"station": station})
+        self._start_pianobar()
+        self.enclosure.mouth_think()
 
-    def _play_station(self, station, speak=True):
-        if speak:
-            self.speak("playing {} ".format(station))
-            wait_while_speaking()
-        for channels in self.settings["stations"]:
-            if station == channels[0]:
-                wait_while_speaking()
+        for channel in self.settings.get("stations"):
+            if station == channel[0]:
                 self.process.stdin.write("s")
-                self.current_station = str(channels[1])
-                station_number = str(channels[1]) + "\n"
+                self.current_station = str(channel[1])
+                station_number = str(channel[1]) + "\n"
                 self.process.stdin.write(station_number)
-                self.piano_bar_state = "play"
-                self.settings["last_played"] = channels
+                self.piano_bar_state = "playing"
+                self.settings["last_played"] = channel
 
     def play_pandora(self, message=None):
         if self._is_setup:
@@ -357,10 +370,12 @@ class PianobarSkill(MycroftSkill):
                     # self.pause_song()
                     self._play_station(last_played[0], speak=False)
                 else:
-                    self.speak("playing pandora")
-                    wait_while_speaking()
-                    self._play_station(
-                        self.settings["stations"][0][0], speak=False)
+                    # default to the first station in the list
+                    if self.settings.get("stations"):
+                        station = self.settings["stations"][0][0]
+
+            # Play specified station
+            self._play_station(station, dialog)
         else:
             self.speak("Please go to home.mycroft.ai to register pandora")
 
@@ -368,16 +383,11 @@ class PianobarSkill(MycroftSkill):
         self.process.stdin.write("n")
         self.piano_bar_state = "play"
 
-    def next_station(self, message=None):
-        station_count = self.settings["station_count"]
-        current_station = int(self.current_station)
-        new_station = current_station + 1
-        if new_station < station_count:
-            new_station = self.settings["stations"][new_station][0]
-            self.pause_song()
-            self._play_station(new_station)
-        else:
-            new_station = 0
+    def handle_next_station(self, message=None):
+        if self.process and self.settings.get("stations"):
+            new_station = int(self.current_station) + 1
+            if new_station >= int(self.settings.get("station_count", 0)):
+                new_station = 0
             new_station = self.settings["stations"][new_station][0]
             self.pause_song()
             self._play_station(new_station)
@@ -410,15 +420,26 @@ class PianobarSkill(MycroftSkill):
                 if self.process is not None and self.piano_bar_state != "stop":
                     self.resume_song()
         else:
-            self.speak("Please go to home.mycroft.ai to register pandora")
+            # Lead user to setup for Pandora
+            self.speak_dialog("please.register.pandora")
 
-    # TODO: use converse for this
-    def list_stations(self, message=None):
-        self.pause_song()
+    def handle_list(self, message=None):
+        is_playing = self.piano_bar_state == "playing"
+        if is_playing:
+            self.handle_pause()
 
-        time_pause = 5
-        if len(self.settings["stations"]) >= 4:
-            list_station_dialog = "subscribed pandora stations are "
+        # build the list of stations
+        l = []
+        for station in self.settings.get("stations"):
+            l.append(station[0])  # [0] = name
+        if len(l) == 0:
+            self.speak_dialog("no.stations")
+            return
+
+        # read the list
+        if len(l) > 1:
+            list = ', '.join(l[:-1]) + " " + \
+                   self.translate("and") + " " + l[-1]
         else:
             list_station_dialog = "subscribed pandora stations are "
 
