@@ -60,7 +60,7 @@ class PianobarSkill(MycroftSkill):
         self.settings["station_count"] = 0
         self.settings["stations"] = []
         self.settings["last_played"] = None
-        self.settings.get('first_init') = True  # True = first run ever
+        self.settings['first_init'] = True  # True = first run ever
 
     def initialize(self):
         self._load_vocab_files()
