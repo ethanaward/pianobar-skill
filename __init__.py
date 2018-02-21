@@ -50,6 +50,18 @@ class PianobarSkill(MycroftSkill):
         self.debug_mode = False
         self.idle_count = 0
 
+        # Initialize settings values
+        self.settings["email"] = ""
+        self.settings["password"] = ""
+        self.settings["song_artist"] = ""
+        self.settings["song_title"] = ""
+        self.settings["song_album"] = ""
+        self.settings["station_name"] = ""
+        self.settings["station_count"] = 0
+        self.settings["stations"] = []
+        self.settings["last_played"] = None
+        self.settings.get('first_init') = True  # True = first run ever
+
     def initialize(self):
         self._load_vocab_files()
         self._init_pianobar()
@@ -340,14 +352,14 @@ class PianobarSkill(MycroftSkill):
         self._start_pianobar()
         self.enclosure.mouth_think()
 
-        for channels in self.settings["stations"]:
-            if station == channels[0]:
+        for channel in self.settings.get("stations"):
+            if station == channel[0]:
                 self.process.stdin.write("s")
-                self.current_station = str(channels[1])
-                station_number = str(channels[1]) + "\n"
+                self.current_station = str(channel[1])
+                station_number = str(channel[1]) + "\n"
                 self.process.stdin.write(station_number)
                 self.piano_bar_state = "playing"
-                self.settings["last_played"] = channels
+                self.settings["last_played"] = channel
 
     @intent_handler(IntentBuilder("").require("Play").require("Pandora"))
     def play_pandora(self, message=None):
@@ -366,7 +378,8 @@ class PianobarSkill(MycroftSkill):
                     dialog = "resuming.last.station"
                 else:
                     # default to the first station in the list
-                    station = self.settings["stations"][0][0]
+                    if self.settings.get("stations"):
+                        station = self.settings["stations"][0][0]
 
             # Play specified station
             self._play_station(station, dialog)
@@ -381,9 +394,9 @@ class PianobarSkill(MycroftSkill):
             self.piano_bar_state = "playing"
 
     def handle_next_station(self, message=None):
-        if self.process:
+        if self.process and self.settings.get("stations"):
             new_station = int(self.current_station) + 1
-            if new_station >= int(self.settings["station_count"]):
+            if new_station >= int(self.settings.get("station_count", 0)):
                 new_station = 0
             new_station = self.settings["stations"][new_station][0]
             self._play_station(new_station)
@@ -419,7 +432,7 @@ class PianobarSkill(MycroftSkill):
 
         # build the list of stations
         l = []
-        for station in self.settings["stations"]:
+        for station in self.settings.get("stations"):
             l.append(station[0])  # [0] = name
         if len(l) == 0:
             self.speak_dialog("no.stations")
