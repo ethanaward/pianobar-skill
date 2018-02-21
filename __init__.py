@@ -41,7 +41,7 @@ class PianobarSkill(MycroftSkill):
     def __init__(self):
         super(PianobarSkill, self).__init__(name="PianobarSkill")
         self.process = None
-        self.piano_bar_state = None  # 'playing', 'paused', 'stop', 'autopause'
+        self.piano_bar_state = None  # 'playing', 'paused', 'autopause'
         self.current_station = None
         self._is_setup = False
         self.vocabs = []    # keep a list of vocabulary words
@@ -438,7 +438,7 @@ class PianobarSkill(MycroftSkill):
             self.handle_resume_song()
 
     def stop(self):
-        if self.piano_bar_state == "playing":
+        if not self.piano_bar_state == "paused":
             self.handle_pause()
             return True
 
