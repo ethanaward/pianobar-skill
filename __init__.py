@@ -66,13 +66,7 @@ class PianobarSkill(MycroftSkill):
         self._load_vocab_files()
         self._init_pianobar()
 
-        self.schedule_repeating_event(self._poll_for_pianobar_update,
-                                      None, 1,
-                                      name='MonitorPianobar')
-        self.add_event('recognizer_loop:record_begin',
-                       self.handle_listener_started)
-
-        # Monitor for credential changes
+        # Check and then monitor for credential changes
         self.settings.set_changed_callback(self.on_websettings_changed)
         self.on_websettings_changed()
 
@@ -119,22 +113,10 @@ class PianobarSkill(MycroftSkill):
         """ Intents should only be registered once settings are inputed
             to avoid conflicts with other music skills
         """
-        next_song_intent = IntentBuilder("PandoraNextIntent"). \
-            require("Next").require("Song").build()
-        self.register_intent(next_song_intent, self.handle_next_song)
-
         next_station_intent = IntentBuilder("PandoraNextStationIntent"). \
             require("Next").require("Station").build()
         self.register_intent(next_station_intent, self.handle_next_station)
-
-        pause_song_intent = IntentBuilder("PandoraPauseIntent"). \
-            require("Pause").require("Pandora").build()
-        self.register_intent(pause_song_intent, self.handle_pause)
-
-        resume_song_intent = IntentBuilder("PandoraResumeIntent"). \
-            require("Resume").require("Pandora").build()
-        self.register_intent(resume_song_intent, self.handle_resume_song)
-
+        
         list_stations_intent = IntentBuilder("PandoraListStationIntent"). \
             optionally("Pandora").require("Query").require("Station").build()
         self.register_intent(list_stations_intent, self.handle_list)
@@ -143,6 +125,11 @@ class PianobarSkill(MycroftSkill):
             require("Change").require("Station").build()
         self.register_intent(play_stations_intent, self.play_station)
 
+        # Messages from the skill-playback-control / common Audio service
+        self.add_event('mycroft.audio.service.pause', self.handle_pause)
+        self.add_event('mycroft.audio.service.resume', self.handle_resume_song)
+        self.add_event('mycroft.audio.service.next', self.handle_next_song)
+        
     def on_websettings_changed(self):
         if not self._is_setup:
             email = self.settings.get("email", "")
@@ -208,6 +195,21 @@ class PianobarSkill(MycroftSkill):
                             self.vocabs.append(vocab)
         else:
             LOG.error('No vocab loaded, ' + vocab_dir + ' does not exist')
+
+    def start_monitor(self):
+        # Clear any existing event
+        self.stop_monitor()
+
+        # Schedule a new one every second to monitor/update display
+        self.schedule_repeating_event(self._poll_for_pianobar_update,
+                                      None, 1,
+                                      name='MonitorPianobar')
+        self.add_event('recognizer_loop:record_begin',
+                       self.handle_listener_started)
+
+    def stop_monitor(self):
+        # Clear any existing event
+        self.cancel_scheduled_event('MonitorPianobar')
 
     def _poll_for_pianobar_update(self, message):
         # Checks once a second for feedback from Pianobar
@@ -286,9 +288,9 @@ class PianobarSkill(MycroftSkill):
                 (info[station].replace("Radio", ""), index))
         if self.debug_mode:
             LOG.info("Stations: "+str(self.settings["stations"]))
-        self.settings.store()
+        # self.settings.store()
 
-    def _start_pianobar(self):
+    def _launch_pianobar_process(self):
         try:
             LOG.info("Starting Pianobar process")
             subprocess.call("pkill pianobar", shell=True)
@@ -349,7 +351,7 @@ class PianobarSkill(MycroftSkill):
             self.speak_dialog(dialog, {"station": station})
         else:
             self.speak_dialog("playing.station", {"station": station})
-        self._start_pianobar()
+        self._launch_pianobar_process()
         self.enclosure.mouth_think()
 
         for channel in self.settings.get("stations"):
@@ -360,6 +362,8 @@ class PianobarSkill(MycroftSkill):
                 self.process.stdin.write(station_number)
                 self.piano_bar_state = "playing"
                 self.settings["last_played"] = channel
+
+                self.start_monitor()
 
     @intent_handler(IntentBuilder("").require("Play").require("Pandora"))
     def play_pandora(self, message=None):
@@ -392,6 +396,7 @@ class PianobarSkill(MycroftSkill):
             self.enclosure.mouth_think()
             self.process.stdin.write("n")
             self.piano_bar_state = "playing"
+            self.start_monitor()
 
     def handle_next_station(self, message=None):
         if self.process and self.settings.get("stations"):
@@ -405,11 +410,13 @@ class PianobarSkill(MycroftSkill):
         if self.process:
             self.process.stdin.write("S")
             self.piano_bar_state = "paused"
+            self.stop_monitor()
 
     def handle_resume_song(self, message=None):
         if self.process:
             self.process.stdin.write("P")
             self.piano_bar_state = "playing"
+            self.start_monitor()
 
     def play_station(self, message=None):
         if self._is_setup:
@@ -453,6 +460,7 @@ class PianobarSkill(MycroftSkill):
     def stop(self):
         if not self.piano_bar_state == "paused":
             self.handle_pause()
+            self.enclosure.mouth_reset()
             return True
 
     @intent_handler(IntentBuilder("").require("Pandora").
@@ -470,6 +478,8 @@ class PianobarSkill(MycroftSkill):
             self.speak_dialog("leaving.debug.mode.dialog")
 
     def shutdown(self):
+        self.stop_monitor()
+
         # Clean up before shutting down the skill
         subprocess.call("pkill pianobar", shell=True)
         if self.piano_bar_state == "playing":
