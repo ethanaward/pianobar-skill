@@ -236,7 +236,7 @@ class PianobarSkill(MycroftSkill):
 
         # Run this exactly one time to prepare pianobar for usage
         # by Mycroft.
-        try:
+        try: 
             LOG.info("INIT PIANOBAR")
             subprocess.call("pkill pianobar", shell=True)
             self.process = subprocess.Popen(["pianobar"],
@@ -248,6 +248,7 @@ class PianobarSkill(MycroftSkill):
             time.sleep(0.5)
             self.process.kill()
             self.settings['first_init'] = False
+            self._load_current_info()
         except:
             self.speak_dialog('wrong.credentials')
 
