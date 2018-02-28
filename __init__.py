@@ -340,6 +340,7 @@ class PianobarSkill(MycroftSkill):
 
     def _play_station(self, station, dialog=None):
         LOG.info("Starting: "+str(station))
+        self._launch_pianobar_process()
         if dialog:
             self.speak_dialog(dialog, {"station": station})
         else:
@@ -348,19 +349,20 @@ class PianobarSkill(MycroftSkill):
             else:
                 self.speak_dialog("playing.station", {"station": "pandora"})
 
-        self._launch_pianobar_process()
         self.enclosure.mouth_think()
-
-        for channel in self.settings.get("stations"):
-            if station == channel[0]:
-                self.process.stdin.write("s")
-                self.current_station = str(channel[1])
-                station_number = str(channel[1]) + "\n"
-                self.process.stdin.write(station_number)
-                self.piano_bar_state = "playing"
-                self.settings["last_played"] = channel
-
-                self.start_monitor()
+        if station:
+            for channel in self.settings.get("stations"):
+                if station == channel[0]:
+                    self.process.stdin.write("s")
+                    self.current_station = str(channel[1])
+                    station_number = str(channel[1]) + "\n"
+                    self.process.stdin.write(station_number)
+                    self.piano_bar_state = "playing"
+                    self.settings["last_played"] = channel
+                    self.start_monitor()
+        else:
+            self.process.stdin.write("s")
+            self.process.stdin.write(0)
 
     @intent_handler(IntentBuilder("").require("Play").require("Pandora"))
     def play_pandora(self, message=None):
