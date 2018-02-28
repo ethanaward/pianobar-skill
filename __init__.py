@@ -64,18 +64,10 @@ class PianobarSkill(MycroftSkill):
 
     def initialize(self):
         self._load_vocab_files()
-        self._init_pianobar()
 
         # Check and then monitor for credential changes
         self.settings.set_changed_callback(self.on_websettings_changed)
         self.on_websettings_changed()
-
-    def get_intro_message(self):
-        # This will be spoken on first installation
-        if not self._is_setup:
-            return self.translate("please.register.pandora")
-        else:
-            return None
 
     ######################################################################
     # 'Auto ducking' - pause playback when Mycroft wakes
@@ -136,49 +128,49 @@ class PianobarSkill(MycroftSkill):
             password = self.settings.get("password", "")
             try:
                 if email and password:
-                    self._is_setup = True
-                    self._register_all_intents()
                     self._configure_pianobar()
+                    self._init_pianobar()
+                    self._register_all_intents()
+                    self._is_setup = True
             except Exception as e:
                 LOG.error(e)
 
     def _configure_pianobar(self):
         # Initialize the Pianobar configuration file
-        if self._is_setup:
-            if not exists(self.pianobar_path):
-                makedirs(self.pianobar_path)
+        if not exists(self.pianobar_path):
+            makedirs(self.pianobar_path)
 
-            config_path = join(self.pianobar_path, 'config')
-            with open(config_path, 'w+') as f:
+        config_path = join(self.pianobar_path, 'config')
+        with open(config_path, 'w+') as f:
 
-                # grabs the tls_key needed
-                tls_key = subprocess.check_output(
-                    "openssl s_client -connect tuner.pandora.com:443 \
-                    < /dev/null 2> /dev/null | openssl x509 -noout \
-                    -fingerprint | tr -d ':' | cut -d'=' -f2",
-                    shell=True)
+            # grabs the tls_key needed
+            tls_key = subprocess.check_output(
+                "openssl s_client -connect tuner.pandora.com:443 \
+                < /dev/null 2> /dev/null | openssl x509 -noout \
+                -fingerprint | tr -d ':' | cut -d'=' -f2",
+                shell=True)
 
-                config = 'audio_quality = medium\n' + \
-                         'tls_fingerprint = {}\n' + \
-                         'user = {}\n' + \
-                         'password = {}\n' + \
-                         'event_command = {}'
+            config = 'audio_quality = medium\n' + \
+                     'tls_fingerprint = {}\n' + \
+                     'user = {}\n' + \
+                     'password = {}\n' + \
+                     'event_command = {}'
 
-                f.write(config.format(tls_key,
-                                      self.settings["email"],
-                                      self.settings["password"],
-                                      self._dir + '/event_command.py'))
+            f.write(config.format(tls_key,
+                                  self.settings["email"],
+                                  self.settings["password"],
+                                  self._dir + '/event_command.py'))
 
-            # Raspbian requires adjustments to audio output to use PulseAudio
-            platform = self.config_core['enclosure'].get('platform')
-            if platform == 'picroft' or platform == 'mycroft_mark_1':
-                libao_path = expanduser('~/.libao')
-                if not isfile(libao_path):
-                    with open(libao_path, 'w') as f:
-                        f.write('dev=0\ndefault_driver=pulse')
-                    self.speak_dialog("configured.please.reboot")
-                    wait_while_speaking()
-                    self.emitter.emit(Message('system.reboot'))
+        # Raspbian requires adjustments to audio output to use PulseAudio
+        platform = self.config_core['enclosure'].get('platform')
+        if platform == 'picroft' or platform == 'mycroft_mark_1':
+            libao_path = expanduser('~/.libao')
+            if not isfile(libao_path):
+                with open(libao_path, 'w') as f:
+                    f.write('dev=0\ndefault_driver=pulse')
+                self.speak_dialog("configured.please.reboot")
+                wait_while_speaking()
+                self.emitter.emit(Message('system.reboot'))
 
     def _load_vocab_files(self):
         # Keep a list of all the vocabulary words for this skill.  Later
@@ -351,7 +343,11 @@ class PianobarSkill(MycroftSkill):
         if dialog:
             self.speak_dialog(dialog, {"station": station})
         else:
-            self.speak_dialog("playing.station", {"station": station})
+            if station:
+                self.speak_dialog("playing.station", {"station": station})
+            else:
+                self.speak_dialog("playing.station", {"station": "pandora"})
+
         self._launch_pianobar_process()
         self.enclosure.mouth_think()
 
