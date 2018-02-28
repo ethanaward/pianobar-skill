@@ -69,13 +69,6 @@ class PianobarSkill(MycroftSkill):
         self.settings.set_changed_callback(self.on_websettings_changed)
         self.on_websettings_changed()
 
-    def get_intro_message(self):
-        # This will be spoken on first installation
-        if not self._is_setup:
-            return self.translate("please.register.pandora")
-        else:
-            return None
-
     ######################################################################
     # 'Auto ducking' - pause playback when Mycroft wakes
 
@@ -135,10 +128,10 @@ class PianobarSkill(MycroftSkill):
             password = self.settings.get("password", "")
             try:
                 if email and password:
-                    self._is_setup = True
-                    self._register_all_intents()
                     self._configure_pianobar()
                     self._init_pianobar()
+                    self._register_all_intents()
+                    self._is_setup = True
             except Exception as e:
                 LOG.error(e)
 
