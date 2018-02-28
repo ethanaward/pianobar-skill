@@ -64,7 +64,6 @@ class PianobarSkill(MycroftSkill):
 
     def initialize(self):
         self._load_vocab_files()
-        self._init_pianobar()
 
         # Check and then monitor for credential changes
         self.settings.set_changed_callback(self.on_websettings_changed)
@@ -139,6 +138,7 @@ class PianobarSkill(MycroftSkill):
                     self._is_setup = True
                     self._register_all_intents()
                     self._configure_pianobar()
+                    self._init_pianobar()
             except Exception as e:
                 LOG.error(e)
 
