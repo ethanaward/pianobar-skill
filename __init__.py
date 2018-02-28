@@ -472,7 +472,7 @@ class PianobarSkill(MycroftSkill):
     def debug_off_intent(self, message=None):
         if self.debug_mode:
             self.debug_mode = False
-            self.speak_dialog("leaving.debug.mode.dialog")
+            self.speak_dialog("leaving.debug.mode")
 
     def shutdown(self):
         self.stop_monitor()
