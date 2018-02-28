@@ -379,8 +379,9 @@ class PianobarSkill(MycroftSkill):
                     if self.settings.get("stations"):
                         station = self.settings["stations"][0][0]
 
-            # Play specified station
-            self._play_station(station, dialog)
+            if station is None:
+                # Play specified station
+                self._play_station("pandora", dialog)
         else:
             # Lead user to setup for Pandora
             self.speak_dialog("please.register.pandora")
