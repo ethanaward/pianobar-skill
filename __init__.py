@@ -128,10 +128,10 @@ class PianobarSkill(MycroftSkill):
             password = self.settings.get("password", "")
             try:
                 if email and password:
-                    self._is_setup = True  # this needs to go first
                     self._configure_pianobar()
                     self._init_pianobar()
                     self._register_all_intents()
+                    self._is_setup = True
             except Exception as e:
                 LOG.error(e)
 
@@ -151,15 +151,15 @@ class PianobarSkill(MycroftSkill):
                 shell=True)
 
             config = 'audio_quality = medium\n' + \
-                        'tls_fingerprint = {}\n' + \
-                        'user = {}\n' + \
-                        'password = {}\n' + \
-                        'event_command = {}'
+                     'tls_fingerprint = {}\n' + \
+                     'user = {}\n' + \
+                     'password = {}\n' + \
+                     'event_command = {}'
 
             f.write(config.format(tls_key,
-                                    self.settings["email"],
-                                    self.settings["password"],
-                                    self._dir + '/event_command.py'))
+                                  self.settings["email"],
+                                  self.settings["password"],
+                                  self._dir + '/event_command.py'))
 
         # Raspbian requires adjustments to audio output to use PulseAudio
         platform = self.config_core['enclosure'].get('platform')
