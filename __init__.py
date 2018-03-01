@@ -364,7 +364,6 @@ class PianobarSkill(MycroftSkill):
             time.sleep(2)
             LOG.info(self.settings.get('stations'))
             self.process.stdin.write("s")
-            self.current_station = "0"
             self.process.stdin.write("0\n")
             self.piano_bar_state = "playing"
             self.start_monitor()
