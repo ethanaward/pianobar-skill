@@ -368,7 +368,7 @@ class PianobarSkill(MycroftSkill):
             # may not load pianobar info in time
             try:
                 channel = self.settings.get('stations')[0]
-                station_number = channel[0]
+                station_number = channel[1]
                 self.process.stdin.write(station_number)
                 self.settings["last_played"] = channel
             except:
