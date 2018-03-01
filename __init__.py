@@ -374,7 +374,8 @@ class PianobarSkill(MycroftSkill):
                 self.settings["last_played"] = channel
             except Exception as e:
                 LOG.info(e)
-                self.process.stdin.write('0\n')
+                self.current_station = "0"
+                self.process.stdin.write("0\n")
             self.piano_bar_state = "playing"
             self.start_monitor()
 
