@@ -346,8 +346,6 @@ class PianobarSkill(MycroftSkill):
         else:
             if station:
                 self.speak_dialog("playing.station", {"station": station})
-            else:
-                self.speak_dialog("playing.station", {"station": "pandora"})
 
         self.enclosure.mouth_think()
         if station:
