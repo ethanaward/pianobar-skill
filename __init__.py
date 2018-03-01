@@ -366,16 +366,24 @@ class PianobarSkill(MycroftSkill):
             # try catch block because some systems
             # may not load pianobar info in time
             try:
-                channel = self.settings.get('stations')[0]
+                channel = self.settings.get("stations")[0]
                 LOG.info(channel)
-                station_number = str(channel[1]) + "\n"
-                LOG.info(station_number)
-                self.process.stdin.write(station_number)
-                self.settings["last_played"] = channel
+                if channel:
+                    self.speak_dialog(
+                        "playing.station", {"station": channel[0]}
+                        )
+                    station_number = str(channel[1]) + "\n"
+                    LOG.info(station_number)
+                    self.process.stdin.write(station_number)
+                    self.settings["last_played"] = channel
+                else:
+                    raise ValueError
             except Exception as e:
                 LOG.info(e)
+                self.speak_dialog("playing.station", {"station": "pandora"})
                 self.current_station = "0"
                 self.process.stdin.write("0\n")
+            self.handle_resume_song()
             self.piano_bar_state = "playing"
             self.start_monitor()
 
