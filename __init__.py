@@ -362,7 +362,10 @@ class PianobarSkill(MycroftSkill):
                     self.start_monitor()
         else:
             self.process.stdin.write("s")
-            self.process.stdin.write(0)
+            self.current_station = "0"
+            self.process.stdin.write("0\n")
+            self.piano_bar_state = "playing"
+            self.start_monitor()
 
     @intent_handler(IntentBuilder("").require("Play").require("Pandora"))
     def play_pandora(self, message=None):
