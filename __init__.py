@@ -361,6 +361,8 @@ class PianobarSkill(MycroftSkill):
                     self.settings["last_played"] = channel
                     self.start_monitor()
         else:
+            time.sleep(2)
+            LOG.info(self.settings.get('stations'))
             self.process.stdin.write("s")
             self.current_station = "0"
             self.process.stdin.write("0\n")
