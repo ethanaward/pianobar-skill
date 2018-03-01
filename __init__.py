@@ -108,7 +108,7 @@ class PianobarSkill(MycroftSkill):
         next_station_intent = IntentBuilder("PandoraNextStationIntent"). \
             require("Next").require("Station").build()
         self.register_intent(next_station_intent, self.handle_next_station)
-        
+
         list_stations_intent = IntentBuilder("PandoraListStationIntent"). \
             optionally("Pandora").require("Query").require("Station").build()
         self.register_intent(list_stations_intent, self.handle_list)
@@ -121,7 +121,7 @@ class PianobarSkill(MycroftSkill):
         self.add_event('mycroft.audio.service.pause', self.handle_pause)
         self.add_event('mycroft.audio.service.resume', self.handle_resume_song)
         self.add_event('mycroft.audio.service.next', self.handle_next_song)
-        
+
     def on_websettings_changed(self):
         if not self._is_setup:
             email = self.settings.get("email", "")
@@ -228,7 +228,7 @@ class PianobarSkill(MycroftSkill):
 
         # Run this exactly one time to prepare pianobar for usage
         # by Mycroft.
-        try: 
+        try:
             LOG.info("INIT PIANOBAR")
             subprocess.call("pkill pianobar", shell=True)
             self.process = subprocess.Popen(["pianobar"],
