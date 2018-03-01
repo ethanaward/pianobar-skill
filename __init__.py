@@ -108,7 +108,7 @@ class PianobarSkill(MycroftSkill):
         next_station_intent = IntentBuilder("PandoraNextStationIntent"). \
             require("Next").require("Station").build()
         self.register_intent(next_station_intent, self.handle_next_station)
-        
+
         list_stations_intent = IntentBuilder("PandoraListStationIntent"). \
             optionally("Pandora").require("Query").require("Station").build()
         self.register_intent(list_stations_intent, self.handle_list)
@@ -121,7 +121,7 @@ class PianobarSkill(MycroftSkill):
         self.add_event('mycroft.audio.service.pause', self.handle_pause)
         self.add_event('mycroft.audio.service.resume', self.handle_resume_song)
         self.add_event('mycroft.audio.service.next', self.handle_next_song)
-        
+
     def on_websettings_changed(self):
         if not self._is_setup:
             email = self.settings.get("email", "")
@@ -228,7 +228,7 @@ class PianobarSkill(MycroftSkill):
 
         # Run this exactly one time to prepare pianobar for usage
         # by Mycroft.
-        try: 
+        try:
             LOG.info("INIT PIANOBAR")
             subprocess.call("pkill pianobar", shell=True)
             self.process = subprocess.Popen(["pianobar"],
@@ -361,9 +361,18 @@ class PianobarSkill(MycroftSkill):
                     self.settings["last_played"] = channel
                     self.start_monitor()
         else:
-            self.process.stdin.write("s")
-            self.current_station = "0"
-            self.process.stdin.write("0\n")
+            time.sleep(2)  # wait for pianobar to loading
+            if self.debug_mode:
+                LOG.info(self.settings.get('stations'))
+            # try catch block because some systems
+            # may not load pianobar info in time
+            try:
+                channel = self.settings.get('stations')[0]
+                station_number = str(channel[1]) + "\n"
+                self.process.stdin.write(station_number)
+                self.settings["last_played"] = channel
+            except:
+                self.process.stdin.write('0\n')
             self.piano_bar_state = "playing"
             self.start_monitor()
 
