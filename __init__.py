@@ -376,6 +376,7 @@ class PianobarSkill(MycroftSkill):
                 LOG.info(e)
                 self.current_station = "0"
                 self.process.stdin.write("0\n")
+            self.handle_resume_song()
             self.piano_bar_state = "playing"
             self.start_monitor()
 
