@@ -362,17 +362,20 @@ class PianobarSkill(MycroftSkill):
                     self.start_monitor()
         else:
             time.sleep(2)  # wait for pianobar to loading
-            if self.debug_mode:
-                LOG.info(self.settings.get('stations'))
+            LOG.info(self.settings.get('stations'))
             # try catch block because some systems
             # may not load pianobar info in time
             try:
                 channel = self.settings.get('stations')[0]
+                LOG.info(channel)
                 station_number = str(channel[1]) + "\n"
+                LOG.info(station_number)
                 self.process.stdin.write(station_number)
                 self.settings["last_played"] = channel
-            except:
-                self.process.stdin.write('0\n')
+            except Exception as e:
+                LOG.info(e)
+                self.current_station = "0"
+                self.process.stdin.write("0\n")
             self.piano_bar_state = "playing"
             self.start_monitor()
 
