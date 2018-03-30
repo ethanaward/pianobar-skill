@@ -504,10 +504,11 @@ class PianobarSkill(MycroftSkill):
         self.stop_monitor()
 
         # Clean up before shutting down the skill
-        subprocess.call("pkill pianobar", shell=True)
         if self.piano_bar_state == "playing":
             self.enclosure.mouth_reset()
 
+        if self.process:
+            self.process.stdin.write("q")
         super(PianobarSkill, self).shutdown()
 
 
