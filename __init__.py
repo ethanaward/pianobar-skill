@@ -62,6 +62,8 @@ class PianobarSkill(MycroftSkill):
         self.settings["last_played"] = None
         self.settings['first_init'] = True  # True = first run ever
 
+        subprocess.call(["killall", "-9", "pianobar"])
+
     def initialize(self):
         self._load_vocab_files()
 
@@ -230,7 +232,7 @@ class PianobarSkill(MycroftSkill):
         # by Mycroft.
         try:
             LOG.info("INIT PIANOBAR")
-            subprocess.call("pkill pianobar", shell=True)
+            subprocess.call(["killall", "-9", "pianobar"])
             self.process = subprocess.Popen(["pianobar"],
                                             stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE)
@@ -286,8 +288,8 @@ class PianobarSkill(MycroftSkill):
     def _launch_pianobar_process(self):
         try:
             LOG.info("Starting Pianobar process")
-            subprocess.call("pkill pianobar", shell=True)
-            time.sleep(1)
+            subprocess.call(["killall", "-9", "pianobar"])
+            sleep(1)
 
             # start pandora
             if self.debug_mode:
@@ -504,10 +506,11 @@ class PianobarSkill(MycroftSkill):
         self.stop_monitor()
 
         # Clean up before shutting down the skill
-        subprocess.call("pkill pianobar", shell=True)
         if self.piano_bar_state == "playing":
             self.enclosure.mouth_reset()
 
+        if self.process:
+            self.process.stdin.write("q")
         super(PianobarSkill, self).shutdown()
 
 
