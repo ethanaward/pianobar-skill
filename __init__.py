@@ -243,7 +243,7 @@ class PianobarSkill(MycroftSkill):
             self.process.kill()
             self.settings['first_init'] = False
             self._load_current_info()
-        except:
+        except Exception:
             self.speak_dialog('wrong.credentials')
 
         self.process = None
@@ -289,7 +289,7 @@ class PianobarSkill(MycroftSkill):
         try:
             LOG.info("Starting Pianobar process")
             subprocess.call(["killall", "-9", "pianobar"])
-            sleep(1)
+            time.sleep(1)
 
             # start pandora
             if self.debug_mode:
@@ -305,7 +305,7 @@ class PianobarSkill(MycroftSkill):
             time.sleep(2)
             self._load_current_info()
             LOG.info("Pianobar process initialized")
-        except:
+        except Exception:
             self.speak_dialog('wrong.credentials')
             self.process = None
 
@@ -343,6 +343,10 @@ class PianobarSkill(MycroftSkill):
     def _play_station(self, station, dialog=None):
         LOG.info("Starting: "+str(station))
         self._launch_pianobar_process()
+        
+        if not self.process:
+            return
+        
         if dialog:
             self.speak_dialog(dialog, {"station": station})
         else:
