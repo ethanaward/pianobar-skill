@@ -11,3 +11,5 @@ found_exe() {
 if found_exe pkcon; then
     pkcon install pianobar -y
 fi
+
+exit 0
