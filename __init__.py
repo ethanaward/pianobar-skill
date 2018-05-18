@@ -70,6 +70,7 @@ class PianobarSkill(MycroftSkill):
         # Check and then monitor for credential changes
         self.settings.set_changed_callback(self.on_websettings_changed)
         self.on_websettings_changed()
+        self.add_event('mycroft.stop', self.stop)
 
     ######################################################################
     # 'Auto ducking' - pause playback when Mycroft wakes
@@ -224,6 +225,10 @@ class PianobarSkill(MycroftSkill):
                 self.enclosure.mouth_text(self.settings["song_artist"] + ": " +
                                           self.settings["song_title"])
 
+    def cmd(self, s):
+        self.process.stdin.write(s.encode())
+        self.process.stdin.flush()
+
     def _init_pianobar(self):
         if self.settings.get('first_init') is False:
             return
@@ -237,13 +242,14 @@ class PianobarSkill(MycroftSkill):
                                             stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE)
             time.sleep(3)
-            self.process.stdin.write("0\n")
-            self.process.stdin.write("S")
+            self.cmd("0\n")
+            self.cmd("S")
             time.sleep(0.5)
             self.process.kill()
             self.settings['first_init'] = False
             self._load_current_info()
-        except Exception:
+        except Exception as e:
+            LOG.exception('Failed to connect to Pandora')
             self.speak_dialog('wrong.credentials')
 
         self.process = None
@@ -300,12 +306,13 @@ class PianobarSkill(MycroftSkill):
                                                 stdin=subprocess.PIPE,
                                                 stdout=subprocess.PIPE)
             self.current_station = "0"
-            self.process.stdin.write("0\n")
+            self.cmd("0\n")
             self.handle_pause()
             time.sleep(2)
             self._load_current_info()
             LOG.info("Pianobar process initialized")
         except Exception:
+            LOG.exception('Failed to connect to Pandora')
             self.speak_dialog('wrong.credentials')
             self.process = None
 
@@ -357,10 +364,10 @@ class PianobarSkill(MycroftSkill):
         if station:
             for channel in self.settings.get("stations"):
                 if station == channel[0]:
-                    self.process.stdin.write("s")
+                    self.cmd("s")
                     self.current_station = str(channel[1])
                     station_number = str(channel[1]) + "\n"
-                    self.process.stdin.write(station_number)
+                    self.cmd(station_number)
                     self.piano_bar_state = "playing"
                     self.settings["last_played"] = channel
                     self.start_monitor()
@@ -381,7 +388,7 @@ class PianobarSkill(MycroftSkill):
                     station_number = str(channel[1]) + "\n"
                     if self.debug_mode:
                         LOG.info(station_number)
-                    self.process.stdin.write(station_number)
+                    self.cmd(station_number)
                     self.settings["last_played"] = channel
                 else:
                     raise ValueError
@@ -389,7 +396,7 @@ class PianobarSkill(MycroftSkill):
                 LOG.info(e)
                 self.speak_dialog("playing.station", {"station": "pandora"})
                 self.current_station = "0"
-                self.process.stdin.write("0\n")
+                self.cmd("0\n")
             self.handle_resume_song()
             self.piano_bar_state = "playing"
             self.start_monitor()
@@ -423,7 +430,7 @@ class PianobarSkill(MycroftSkill):
     def handle_next_song(self, message=None):
         if self.process and self.piano_bar_state == "playing":
             self.enclosure.mouth_think()
-            self.process.stdin.write("n")
+            self.cmd("n")
             self.piano_bar_state = "playing"
             self.start_monitor()
 
@@ -437,13 +444,14 @@ class PianobarSkill(MycroftSkill):
 
     def handle_pause(self, message=None):
         if self.process:
-            self.process.stdin.write("S")
+            self.cmd("S")
+            self.process.stdin.flush()
             self.piano_bar_state = "paused"
             self.stop_monitor()
 
     def handle_resume_song(self, message=None):
         if self.process:
-            self.process.stdin.write("P")
+            self.cmd("P")
             self.piano_bar_state = "playing"
             self.start_monitor()
 
@@ -487,7 +495,9 @@ class PianobarSkill(MycroftSkill):
             self.handle_resume_song()
 
     def stop(self):
+        LOG.info('STOPPING PANDORA')
         if not self.piano_bar_state == "paused":
+            LOG.info('YES')
             self.handle_pause()
             self.enclosure.mouth_reset()
             return True
@@ -514,7 +524,7 @@ class PianobarSkill(MycroftSkill):
             self.enclosure.mouth_reset()
 
         if self.process:
-            self.process.stdin.write("q")
+            self.cmd("q")
         super(PianobarSkill, self).shutdown()
 
 
