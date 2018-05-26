@@ -494,6 +494,18 @@ class PianobarSkill(MycroftSkill):
             wait_while_speaking()
             self.handle_resume_song()
 
+    @intent_handler(IntentBuilder("").require("Love").require("Song"))
+    def handle_love(self, message=None):
+        if self.process:
+            self.cmd("+")
+            self.speak_dialog("love.song")
+
+    @intent_handler(IntentBuilder("").require("Ban").require("Song"))
+    def handle_ban(self, message=None):
+        if self.process:
+            self.cmd("-")
+            self.speak_dialog("ban.song")
+
     def stop(self):
         LOG.info('STOPPING PANDORA')
         if not self.piano_bar_state == "paused":
