@@ -428,7 +428,7 @@ class PianobarSkill(MycroftSkill):
             self.speak_dialog("please.register.pandora")
 
     def handle_next_song(self, message=None):
-        if self.process and self.piano_bar_state == "playing":
+        if self.process:
             self.enclosure.mouth_think()
             self.cmd("n")
             self.piano_bar_state = "playing"
