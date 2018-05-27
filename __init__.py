@@ -124,7 +124,6 @@ class PianobarSkill(MycroftSkill):
         self.add_event('mycroft.audio.service.pause', self.handle_pause)
         self.add_event('mycroft.audio.service.resume', self.handle_resume_song)
         self.add_event('mycroft.audio.service.next', self.handle_next_song)
-        self.add_event('mycroft.audio.service.track_info', self.handle_track_info)
 
     def on_websettings_changed(self):
         if not self._is_setup:
@@ -537,7 +536,8 @@ class PianobarSkill(MycroftSkill):
             self.cmd("^")
             self.speak_dialog("reset.pandora.volume")
 
-    def handle_track_info(self):
+    @intent_handler(IntentBuilder("PandoraTrackInfo").require("Song").require("Playing"))
+    def handle_track_info(self, message=None):
         if self.process:
             song = self.settings["song_title"]
             artist = self.settings["song_artist"]
