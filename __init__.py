@@ -503,7 +503,7 @@ class PianobarSkill(MycroftSkill):
     def handle_love(self, message=None):
         if self.process:
             utterance = message.data["utterance"]
-            if utterance.contains("don't") or utterance.contains("not"):
+            if "don't" in utterance or "not" in utterance:
                 self.handle_ban(message)
                 return
             self.cmd("+")
