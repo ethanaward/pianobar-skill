@@ -91,8 +91,8 @@ class PianobarSkill(MycroftSkill):
             self.cancel_scheduled_event('IdleCheck')
             return
         active = DisplayManager.get_active()
-        LOG.info("active: " + str(active))
-        if not active:
+        # LOG.info("active: " + str(active))
+        if not active or active == "PianobarSkill":
             # No activity, start to fall asleep
             self.idle_count += 1
 
