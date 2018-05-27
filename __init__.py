@@ -499,12 +499,38 @@ class PianobarSkill(MycroftSkill):
         if self.process:
             self.cmd("+")
             self.speak_dialog("love.song")
+            # if self.piano_bar_state != "playing":
+            #     self.handle_resume_song()
 
     @intent_handler(IntentBuilder("").require("Ban").require("Song"))
     def handle_ban(self, message=None):
         if self.process:
             self.cmd("-")
             self.speak_dialog("ban.song")
+
+    @intent_handler(IntentBuilder("").require("Tired").require("Song"))
+    def handle_tired(self, message=None):
+        if self.process:
+            self.cmd("t")
+            self.speak_dialog("tired.song")
+
+    @intent_handler(IntentBuilder("").require("Raise").require("Pandora").require("Volume"))
+    def handle_volume_raise(self, message=None):
+        if self.process:
+            self.cmd(")")
+            self.speak_dialog("raised.pandora.volume")
+
+    @intent_handler(IntentBuilder("").require("Lower").require("Pandora").require("Volume"))
+    def handle_volume_lower(self, message=None):
+        if self.process:
+            self.cmd("(")
+            self.speak_dialog("lowered.pandora.volume")
+
+    @intent_handler(IntentBuilder("").require("Reset").require("Pandora").require("Volume"))
+    def handle_volume_reset(self, message=None):
+        if self.process:
+            self.cmd("^")
+            self.speak_dialog("reset.pandora.volume")
 
     def stop(self):
         LOG.info('STOPPING PANDORA')
