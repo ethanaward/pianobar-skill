@@ -124,6 +124,7 @@ class PianobarSkill(MycroftSkill):
         self.add_event('mycroft.audio.service.pause', self.handle_pause)
         self.add_event('mycroft.audio.service.resume', self.handle_resume_song)
         self.add_event('mycroft.audio.service.next', self.handle_next_song)
+        self.add_event('mycroft.audio.service.track_info', self.handle_track_info)
 
     def on_websettings_changed(self):
         if not self._is_setup:
@@ -494,43 +495,54 @@ class PianobarSkill(MycroftSkill):
             wait_while_speaking()
             self.handle_resume_song()
 
-    @intent_handler(IntentBuilder("").require("Love").require("Song"))
+    @intent_handler(IntentBuilder("PandoraLoveSongIntent").require("Love").require("Song"))
     def handle_love(self, message=None):
         if self.process:
+            utterance = message.data["utterance"]
+            if utterance.contains("don't") or utterance.contains("not"):
+                self.handle_ban(message)
+                return
             self.cmd("+")
             self.speak_dialog("love.song")
             # if self.piano_bar_state != "playing":
             #     self.handle_resume_song()
 
-    @intent_handler(IntentBuilder("").require("Ban").require("Song"))
+    @intent_handler(IntentBuilder("PandoraBanSongIntent").require("Ban").require("Song"))
     def handle_ban(self, message=None):
         if self.process:
             self.cmd("-")
             self.speak_dialog("ban.song")
 
-    @intent_handler(IntentBuilder("").require("Tired").require("Song"))
+    @intent_handler(IntentBuilder("PandoraTiredSongIntent").require("Tired").require("Song"))
     def handle_tired(self, message=None):
         if self.process:
             self.cmd("t")
             self.speak_dialog("tired.song")
 
-    @intent_handler(IntentBuilder("").require("Raise").require("Pandora").require("Volume"))
+    @intent_handler(IntentBuilder("PandoraVolumeRaiseIntent").require("Raise").require("Pandora").require("Volume"))
     def handle_volume_raise(self, message=None):
         if self.process:
             self.cmd(")")
             self.speak_dialog("raised.pandora.volume")
 
-    @intent_handler(IntentBuilder("").require("Lower").require("Pandora").require("Volume"))
+    @intent_handler(IntentBuilder("PandoraVolumeLowerIntent").require("Lower").require("Pandora").require("Volume"))
     def handle_volume_lower(self, message=None):
         if self.process:
             self.cmd("(")
             self.speak_dialog("lowered.pandora.volume")
 
-    @intent_handler(IntentBuilder("").require("Reset").require("Pandora").require("Volume"))
+    @intent_handler(IntentBuilder("PandoraVolumeResetIntent").require("Reset").require("Pandora").require("Volume"))
     def handle_volume_reset(self, message=None):
         if self.process:
             self.cmd("^")
             self.speak_dialog("reset.pandora.volume")
+
+    def handle_track_info(self):
+        if self.process:
+            song = self.settings["song_title"]
+            artist = self.settings["song_artist"]
+            album = self.settings["song_album"]
+            self.speak_dialog("track.info", {"song": song, "artist": artist, "album": album})
 
     def stop(self):
         LOG.info('STOPPING PANDORA')
