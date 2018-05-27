@@ -90,8 +90,9 @@ class PianobarSkill(MycroftSkill):
         if not self.piano_bar_state == "autopause":
             self.cancel_scheduled_event('IdleCheck')
             return
-
-        if DisplayManager.get_active() == '':
+        active = DisplayManager.get_active()
+        LOG.info("active: " + str(active))
+        if not active:
             # No activity, start to fall asleep
             self.idle_count += 1
 
