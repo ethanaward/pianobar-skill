@@ -94,7 +94,7 @@ class PianobarSkill(MycroftSkill):
             return
         active = DisplayManager.get_active()
         # LOG.info("active: " + str(active))
-        if active == "PianobarSkill":  # or not active <- add in if resume no matter what
+        if active == "PianobarSkill" or not active:
             # No activity, start to fall asleep
             self.idle_count += 1
 
@@ -204,7 +204,7 @@ class PianobarSkill(MycroftSkill):
                                       name='MonitorPianobar')
         self.add_event('recognizer_loop:record_begin',
                        self.handle_listener_started)
-        self.add_event('recognizer_loop:record_end',
+        self.add_event('recognizer_loop:utterance',
                        self.handle_listener_ended)
 
     def stop_monitor(self):
