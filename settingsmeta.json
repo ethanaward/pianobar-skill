@@ -4,16 +4,16 @@
     "skillMetadata": {
         "sections": [
             {
-                "name": "Login",
+                "name": "Account Information",
                 "fields": [
                     {
                         "type": "label",
-                        "label": "Please input your email and password associated with your Pandora account. It may take up to a minute for the settings to sync."
+                        "label": "Enter your registered <a href='https://www.pandora.com' target='_top'>Pandora</a> account email and password.  If you don't have a Pandora account, you can create one for free."
                     },
                     {
                         "name": "email",
                         "type": "email",
-                        "label": "Email",
+                        "label": "Pandora Email",
                         "value": ""
                     },
                     {
