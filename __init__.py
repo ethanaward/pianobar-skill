@@ -495,9 +495,7 @@ class PianobarSkill(MycroftSkill):
             self.handle_resume_song()
 
     def stop(self):
-        LOG.info('STOPPING PANDORA')
-        if not self.piano_bar_state == "paused":
-            LOG.info('YES')
+        if self.piano_bar_state and not self.piano_bar_state == "paused":
             self.handle_pause()
             self.enclosure.mouth_reset()
             return True
