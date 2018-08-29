@@ -34,7 +34,6 @@ from fuzzywuzzy import fuzz, process as fuzz_process
 
 from mycroft.audio import wait_while_speaking
 from mycroft.messagebus.message import Message
-import mycroft.client.enclosure.display_manager as DisplayManager
 
 
 class PianobarSkill(MycroftSkill):
@@ -91,7 +90,7 @@ class PianobarSkill(MycroftSkill):
             self.cancel_scheduled_event('IdleCheck')
             return
 
-        if DisplayManager.get_active() == '':
+        if self.enclosure.display_manager.get_active() == '':
             # No activity, start to fall asleep
             self.idle_count += 1
 
