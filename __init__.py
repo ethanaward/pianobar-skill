@@ -71,6 +71,54 @@ class PianobarSkill(MycroftSkill):
         self.on_websettings_changed()
         self.add_event('mycroft.stop', self.stop)
 
+        # Common Playback Infrastructure API handlers
+        self.add_event('play:query', self.play__query)
+        self.add_event('play:start', self.play__start)
+
+    def play__query(self, message):
+        phrase = message.data["phrase"]
+
+        if not self._is_setup:
+            if self.voc_match(phrase, "Pandora"):
+                self.bus.emit(message.response({"phrase": phrase,
+                                                "skill_id": self.skill_id,
+                                                "conf": "0.5"}))
+            return
+
+        result = self._extract_station(phrase)
+        if result:
+            # User spoke a station name.
+            station = result[0]
+            conf = 0.7+result[1]/10
+            if self.voc_match(phrase, "Pandora"):
+                # E.g. "play madona on Pandora"
+                conf += 0.2  # move to multi-match confidence
+
+            self.log.info("Station match: {} ({})".format(station, conf))
+            self.bus.emit(message.response({"phrase": phrase,
+                                            "skill_id": self.skill_id,
+                                            "conf": conf,
+                                            "callback_data": {"station":
+                                                              station }}))
+        elif self.voc_match(phrase, "Pandora"):
+            self.bus.emit(message.response({"phrase": phrase,
+                                            "skill_id": self.skill_id,
+                                            "conf": "1.0"}))
+
+    def play__start(self, message):
+        if message.data["skill_id"] != self.skill_id:
+            # Not for this skill!
+            return
+
+        phrase = message.data["phrase"]
+        data = message.data.get("callback_data")
+        station = None
+        if data:
+            station = data.get("station")
+
+        # Launch player
+        self.play_pandora(station)
+
     ######################################################################
     # 'Auto ducking' - pause playback when Mycroft wakes
 
@@ -248,7 +296,7 @@ class PianobarSkill(MycroftSkill):
             self.settings['first_init'] = False
             self._load_current_info()
         except Exception as e:
-            LOG.exception('Failed to connect to Pandora')
+            LOG.exception('Failed to connect to Pandora: '+repr(e))
             self.speak_dialog('wrong.credentials')
 
         self.process = None
@@ -317,8 +365,15 @@ class PianobarSkill(MycroftSkill):
 
     def _extract_station(self, utterance):
         """
-            parse the utterance for station names
-            and return station with highest probability
+        parse the utterance for station names
+        and return station with highest probability
+
+        Args:
+            utterance (str): search term
+
+        Returns:
+            (station->str, conf->float): Tupple with the station name and
+                                            match confidence, or None
         """
         try:
             # TODO: Internationalize
@@ -339,7 +394,7 @@ class PianobarSkill(MycroftSkill):
                 LOG.info("Probabilities: " + str(probabilities))
             if probabilities[1] > 70:
                 station = probabilities[0]
-                return station
+                return (station, probabilities[1])
             else:
                 return None
         except Exception as e:
@@ -349,10 +404,10 @@ class PianobarSkill(MycroftSkill):
     def _play_station(self, station, dialog=None):
         LOG.info("Starting: "+str(station))
         self._launch_pianobar_process()
-        
+
         if not self.process:
             return
-        
+
         if dialog:
             self.speak_dialog(dialog, {"station": station})
         else:
@@ -400,12 +455,10 @@ class PianobarSkill(MycroftSkill):
             self.piano_bar_state = "playing"
             self.start_monitor()
 
-    @intent_handler(IntentBuilder("").require("Play").require("Pandora"))
-    def play_pandora(self, message=None):
+    def play_pandora(self, station):
         if self._is_setup:
             # Examine the whole utterance to see if the user requested a
             # station by name
-            station = self._extract_station(message.data["utterance"])
             if self.debug_mode:
                 LOG.info("Station request:" + str(station))
 
