@@ -35,10 +35,12 @@ from fuzzywuzzy import fuzz, process as fuzz_process
 from mycroft.audio import wait_while_speaking
 from mycroft.messagebus.message import Message
 
+# from mycroft.skills.core import CommonPlaySkill, CPSMatchLevel, intent_handler
+from .common_play_skill import CommonPlaySkill, CPSMatchLevel
 
-class PianobarSkill(MycroftSkill):
+class PianobarSkill(CommonPlaySkill):
     def __init__(self):
-        super(PianobarSkill, self).__init__(name="PianobarSkill")
+        super().__init__(name="PianobarSkill")
         self.process = None
         self.piano_bar_state = None  # 'playing', 'paused', 'autopause'
         self.current_station = None
@@ -71,47 +73,35 @@ class PianobarSkill(MycroftSkill):
         self.on_websettings_changed()
         self.add_event('mycroft.stop', self.stop)
 
-        # Common Playback Infrastructure API handlers
-        self.add_event('play:query', self.play__query)
-        self.add_event('play:start', self.play__start)
-
-    def play__query(self, message):
-        phrase = message.data["phrase"]
-
+    def CPS__match_query_phrase(self, phrase):
         if not self._is_setup:
             if self.voc_match(phrase, "Pandora"):
-                self.bus.emit(message.response({"phrase": phrase,
-                                                "skill_id": self.skill_id,
-                                                "conf": "0.5"}))
-            return
+                # User is most likely trying to use Pandora, e.g.
+                # "play pandora" or "play John Denver using Pandora"
+                return ("pandora", CPSMatchLevel.GENERIC)
 
         result = self._extract_station(phrase)
         if result:
-            # User spoke a station name.
-            station = result[0]
-            conf = 0.7+result[1]/10
+            # User spoke one of their station's names, e.g.
+            # "Play summertime love"
+            match_level = CPSMatchLevel.TITLE
+
             if self.voc_match(phrase, "Pandora"):
-                # E.g. "play madona on Pandora"
-                conf += 0.2  # move to multi-match confidence
+                # User included pandora explicitly, e.g.
+                # "Play summertime love using Pandora"
+                match_level = CPSMatchLevel.MULTI_KEY
 
-            self.log.info("Station match: {} ({})".format(station, conf))
-            self.bus.emit(message.response({"phrase": phrase,
-                                            "skill_id": self.skill_id,
-                                            "conf": conf,
-                                            "callback_data": {"station":
-                                                              station }}))
+            station = result[0]
+            return (station, match_level, {"station" : station})
         elif self.voc_match(phrase, "Pandora"):
-            self.bus.emit(message.response({"phrase": phrase,
-                                            "skill_id": self.skill_id,
-                                            "conf": "1.0"}))
+            if self.voc_match(phrase, "Pandora"):
+                # User has setup Pandora on their account and said Pandora, 
+                # so is likely trying to start Pandora, e.g.
+                # "play pandora" or "play some music on pandora"
+                return ("pandora", CPSMatchLevel.CATEGORY)
 
-    def play__start(self, message):
-        if message.data["skill_id"] != self.skill_id:
-            # Not for this skill!
-            return
-
-        phrase = message.data["phrase"]
-        data = message.data.get("callback_data")
+    def CPS__start(self, phrase, data):
+        # Use the "latest news" intent handler
         station = None
         if data:
             station = data.get("station")
