@@ -28,15 +28,14 @@ from os import makedirs, remove, listdir, path
 from os.path import dirname, join, exists, expanduser, isfile, abspath, isdir
 import shutil
 from adapt.intent import IntentBuilder
-from mycroft.skills.core import MycroftSkill, intent_handler
+from mycroft.skills.core import intent_handler
 from mycroft.util.log import LOG
 from fuzzywuzzy import fuzz, process as fuzz_process
 
 from mycroft.audio import wait_while_speaking
 from mycroft.messagebus.message import Message
 
-# from mycroft.skills.core import CommonPlaySkill, CPSMatchLevel, intent_handler
-from .common_play_skill import CommonPlaySkill, CPSMatchLevel
+from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 
 class PianobarSkill(CommonPlaySkill):
     def __init__(self):
@@ -94,11 +93,10 @@ class PianobarSkill(CommonPlaySkill):
             station = result[0]
             return (station, match_level, {"station" : station})
         elif self.voc_match(phrase, "Pandora"):
-            if self.voc_match(phrase, "Pandora"):
-                # User has setup Pandora on their account and said Pandora, 
-                # so is likely trying to start Pandora, e.g.
-                # "play pandora" or "play some music on pandora"
-                return ("pandora", CPSMatchLevel.CATEGORY)
+            # User has setup Pandora on their account and said Pandora,
+            # so is likely trying to start Pandora, e.g.
+            # "play pandora" or "play some music on pandora"
+            return ("pandora", CPSMatchLevel.CATEGORY)
 
     def CPS__start(self, phrase, data):
         # Use the "latest news" intent handler
