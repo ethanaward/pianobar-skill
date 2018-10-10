@@ -72,7 +72,7 @@ class PianobarSkill(CommonPlaySkill):
         self.on_websettings_changed()
         self.add_event('mycroft.stop', self.stop)
 
-    def CPS__match_query_phrase(self, phrase):
+    def CPS_match_query_phrase(self, phrase):
         if not self._is_setup:
             if self.voc_match(phrase, "Pandora"):
                 # User is most likely trying to use Pandora, e.g.
@@ -98,7 +98,7 @@ class PianobarSkill(CommonPlaySkill):
             # "play pandora" or "play some music on pandora"
             return ("pandora", CPSMatchLevel.CATEGORY)
 
-    def CPS__start(self, phrase, data):
+    def CPS_start(self, phrase, data):
         # Use the "latest news" intent handler
         station = None
         if data:
