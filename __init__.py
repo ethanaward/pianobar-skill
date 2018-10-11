@@ -28,17 +28,18 @@ from os import makedirs, remove, listdir, path
 from os.path import dirname, join, exists, expanduser, isfile, abspath, isdir
 import shutil
 from adapt.intent import IntentBuilder
-from mycroft.skills.core import MycroftSkill, intent_handler
+from mycroft.skills.core import intent_handler
 from mycroft.util.log import LOG
 from fuzzywuzzy import fuzz, process as fuzz_process
 
 from mycroft.audio import wait_while_speaking
 from mycroft.messagebus.message import Message
 
+from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 
-class PianobarSkill(MycroftSkill):
+class PianobarSkill(CommonPlaySkill):
     def __init__(self):
-        super(PianobarSkill, self).__init__(name="PianobarSkill")
+        super().__init__(name="PianobarSkill")
         self.process = None
         self.piano_bar_state = None  # 'playing', 'paused', 'autopause'
         self.current_station = None
@@ -70,6 +71,41 @@ class PianobarSkill(MycroftSkill):
         self.settings.set_changed_callback(self.on_websettings_changed)
         self.on_websettings_changed()
         self.add_event('mycroft.stop', self.stop)
+
+    def CPS_match_query_phrase(self, phrase):
+        if not self._is_setup:
+            if self.voc_match(phrase, "Pandora"):
+                # User is most likely trying to use Pandora, e.g.
+                # "play pandora" or "play John Denver using Pandora"
+                return ("pandora", CPSMatchLevel.GENERIC)
+
+        result = self._extract_station(phrase)
+        if result:
+            # User spoke one of their station's names, e.g.
+            # "Play summertime love"
+            match_level = CPSMatchLevel.TITLE
+
+            if self.voc_match(phrase, "Pandora"):
+                # User included pandora explicitly, e.g.
+                # "Play summertime love using Pandora"
+                match_level = CPSMatchLevel.MULTI_KEY
+
+            station = result[0]
+            return (station, match_level, {"station" : station})
+        elif self.voc_match(phrase, "Pandora"):
+            # User has setup Pandora on their account and said Pandora,
+            # so is likely trying to start Pandora, e.g.
+            # "play pandora" or "play some music on pandora"
+            return ("pandora", CPSMatchLevel.CATEGORY)
+
+    def CPS_start(self, phrase, data):
+        # Use the "latest news" intent handler
+        station = None
+        if data:
+            station = data.get("station")
+
+        # Launch player
+        self.play_pandora(station)
 
     ######################################################################
     # 'Auto ducking' - pause playback when Mycroft wakes
@@ -248,7 +284,7 @@ class PianobarSkill(MycroftSkill):
             self.settings['first_init'] = False
             self._load_current_info()
         except Exception as e:
-            LOG.exception('Failed to connect to Pandora')
+            LOG.exception('Failed to connect to Pandora: '+repr(e))
             self.speak_dialog('wrong.credentials')
 
         self.process = None
@@ -317,8 +353,15 @@ class PianobarSkill(MycroftSkill):
 
     def _extract_station(self, utterance):
         """
-            parse the utterance for station names
-            and return station with highest probability
+        parse the utterance for station names
+        and return station with highest probability
+
+        Args:
+            utterance (str): search term
+
+        Returns:
+            (station->str, conf->float): Tupple with the station name and
+                                            match confidence, or None
         """
         try:
             # TODO: Internationalize
@@ -339,7 +382,7 @@ class PianobarSkill(MycroftSkill):
                 LOG.info("Probabilities: " + str(probabilities))
             if probabilities[1] > 70:
                 station = probabilities[0]
-                return station
+                return (station, probabilities[1])
             else:
                 return None
         except Exception as e:
@@ -349,10 +392,10 @@ class PianobarSkill(MycroftSkill):
     def _play_station(self, station, dialog=None):
         LOG.info("Starting: "+str(station))
         self._launch_pianobar_process()
-        
+
         if not self.process:
             return
-        
+
         if dialog:
             self.speak_dialog(dialog, {"station": station})
         else:
@@ -400,12 +443,10 @@ class PianobarSkill(MycroftSkill):
             self.piano_bar_state = "playing"
             self.start_monitor()
 
-    @intent_handler(IntentBuilder("").require("Play").require("Pandora"))
-    def play_pandora(self, message=None):
+    def play_pandora(self, station):
         if self._is_setup:
             # Examine the whole utterance to see if the user requested a
             # station by name
-            station = self._extract_station(message.data["utterance"])
             if self.debug_mode:
                 LOG.info("Station request:" + str(station))
 
