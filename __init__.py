@@ -20,10 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import sys
 import subprocess
 import json
 import time
+import requests
 from os import makedirs, remove, listdir, path
 from os.path import dirname, join, exists, expanduser, isfile, abspath, isdir
 import shutil
@@ -36,6 +36,28 @@ from mycroft.audio import wait_while_speaking
 from mycroft.messagebus.message import Message
 
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
+
+
+homepage_url = 'https://www.pandora.com'
+login_url = 'https://www.pandora.com/api/v1/auth/login'
+
+
+def get_pandora_login_token():
+    """A login token must be fetched from the website before logging in"""
+    r = requests.get(homepage_url)
+    cookies = r.headers['Set-Cookie']
+    token = cookies.split('csrftoken=')[-1].split(';')[0]
+    return token
+
+
+def get_pandora_user_info(username, password):
+    """Return pandora user info directly from the website"""
+    token = get_pandora_login_token()
+    headers = {'Cookie': 'csrftoken=' + token, 'X-CsrfToken': token}
+    data = {'username': username, 'password': password}
+    r = requests.post(login_url, json=data, headers=headers)
+    return r.json() if r.status_code == 200 else None
+
 
 class PianobarSkill(CommonPlaySkill):
     def __init__(self):
@@ -264,6 +286,19 @@ class PianobarSkill(CommonPlaySkill):
         self.process.stdin.write(s.encode())
         self.process.stdin.flush()
 
+    def troubleshoot_auth_error(self):
+        user_info = get_pandora_user_info(self.settings['email'],
+                                          self.settings['password'])
+        if user_info:
+            if user_info.get('stationCount') == 0:
+                self.speak_dialog('no.stations')
+            else:
+                self.speak_dialog('pandora.error')
+        else:
+            LOG.info('SUPER WRONG: ' + self.settings['email'] + ':' +
+                     self.settings['password'])
+            self.speak_dialog('wrong.credentials')
+
     def _init_pianobar(self):
         if self.settings.get('first_init') is False:
             return
@@ -285,7 +320,7 @@ class PianobarSkill(CommonPlaySkill):
             self._load_current_info()
         except Exception as e:
             LOG.exception('Failed to connect to Pandora: '+repr(e))
-            self.speak_dialog('wrong.credentials')
+            self.troubleshoot_auth_error()
 
         self.process = None
 
@@ -348,7 +383,7 @@ class PianobarSkill(CommonPlaySkill):
             LOG.info("Pianobar process initialized")
         except Exception:
             LOG.exception('Failed to connect to Pandora')
-            self.speak_dialog('wrong.credentials')
+            self.troubleshoot_auth_error()
             self.process = None
 
     def _extract_station(self, utterance):
