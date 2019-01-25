@@ -295,8 +295,6 @@ class PianobarSkill(CommonPlaySkill):
             else:
                 self.speak_dialog('pandora.error')
         else:
-            LOG.info('SUPER WRONG: ' + self.settings['email'] + ':' +
-                     self.settings['password'])
             self.speak_dialog('wrong.credentials')
 
     def _init_pianobar(self):
