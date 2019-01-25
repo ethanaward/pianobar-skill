@@ -12,4 +12,10 @@ if found_exe pkcon; then
     pkcon install pianobar -y
 fi
 
-exit 0
+if found_exe pianobar; then
+    exit 0
+else
+    echo "Could not find pianobar! Please install with your package manager."
+    exit 1
+fi
+
