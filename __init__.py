@@ -358,6 +358,12 @@ class PianobarSkill(CommonPlaySkill):
             LOG.info("Stations: "+str(self.settings["stations"]))
         # self.settings.store()
 
+    def _process_valid(self):
+        if self.process and self.process.poll() == None:
+            return True  # process is running
+        else:
+            return False
+
     def _launch_pianobar_process(self):
         try:
             LOG.info("Starting Pianobar process")
@@ -376,12 +382,15 @@ class PianobarSkill(CommonPlaySkill):
             self.cmd("0\n")
             self.handle_pause()
             time.sleep(2)
-            self._load_current_info()
-            LOG.info("Pianobar process initialized")
+            if self._process_valid():
+                self._load_current_info()
+                LOG.info("Pianobar process initialized")
+                return
         except Exception:
             LOG.exception('Failed to connect to Pandora')
-            self.troubleshoot_auth_error()
-            self.process = None
+
+        self.troubleshoot_auth_error()
+        self.process = None
 
     def _extract_station(self, utterance):
         """
