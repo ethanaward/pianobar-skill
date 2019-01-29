@@ -118,7 +118,7 @@ class PianobarSkill(CommonPlaySkill):
             # User has setup Pandora on their account and said Pandora,
             # so is likely trying to start Pandora, e.g.
             # "play pandora" or "play some music on pandora"
-            return ("pandora", CPSMatchLevel.CATEGORY)
+            return ("pandora", CPSMatchLevel.MULTI_KEY)
 
     def CPS_start(self, phrase, data):
         # Use the "latest news" intent handler
@@ -334,22 +334,21 @@ class PianobarSkill(CommonPlaySkill):
         if isdir(info_path):
             shutil.rmtree(info_path)
 
-        if not exists(info_path):
-            with open(info_path, 'w+'):
-                pass
-
-        with open(info_path, 'r') as f:
-            info = json.load(f)
+        try:
+            with open(info_path, 'r') as f:
+                info = json.load(f)
+        except:
+            info = {}
 
         # Save the song info for later display
-        self.settings["song_artist"] = info["artist"]
-        self.settings["song_title"] = info["title"]
-        self.settings["song_album"] = info["album"]
+        self.settings["song_artist"] = info.get("artist", "")
+        self.settings["song_title"] = info.get("title", "")
+        self.settings["song_album"] = info.get("album", "")
 
-        self.settings["station_name"] = info["stationName"]
+        self.settings["station_name"] = info.get("stationName", "")
         if self.debug_mode:
             LOG.info("Station name: " + str(self.settings['station_name']))
-        self.settings["station_count"] = int(info["stationCount"])
+        self.settings["station_count"] = int(info.get("stationCount", 0))
         self.settings["stations"] = []
         for index in range(self.settings["station_count"]):
             station = "station" + str(index)
@@ -397,17 +396,13 @@ class PianobarSkill(CommonPlaySkill):
                                             match confidence, or None
         """
         try:
-            # TODO: Internationalize
+            # Strip out verbal command words.  For example,
+            # "play tom waits on pandora" becomes "tom waits"
 
-            common_words = [" to ", " on ", " pandora", " play"]
             for vocab in self.vocabs:
                 utterance = utterance.replace(vocab, "")
+            utterance = ' '.join(utterance.split())  # eliminate extra spaces
 
-            # strip out other non important words
-            for words in common_words:
-                utterance = utterance.replace(words, "")
-
-            utterance.lstrip()
             stations = [station[0] for station in self.settings["stations"]]
             probabilities = fuzz_process.extractOne(
                 utterance, stations, scorer=fuzz.ratio)
