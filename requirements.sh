@@ -25,10 +25,10 @@ else
         pm="pacman -S"
     elif found_exe apt; then
         # Debian / Ubuntu / Raspbian
-        pm="apt install"
+        pm="apt -y install"
     elif found_exe zypper; then
         # SUSE
-        pm="zypper install"
+        pm="zypper -y install"
     fi
 fi
 
