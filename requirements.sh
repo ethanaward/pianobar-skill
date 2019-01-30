@@ -20,11 +20,14 @@ else
     priv="sudo"
     dependencies=( pianobar )
 
-    if [ "$dist"  == "\"Arch Linux\""  ]; then
+    if found_exe pacman; then
+        # Arch Linux
         pm="pacman -S"
-    elif [[ "$dist" =~  "Ubuntu" ]] || [[ "$dist" =~ "Debian" ]] ||[[ "$dist" =~ "Raspbian" ]]; then
+    elif found_exe apt; then
+        # Debian / Ubuntu / Raspbian
         pm="apt install"
-    elif [[ "$dist" =~ "SUSE" ]]; then
+    elif found_exe zypper; then
+        # SUSE
         pm="zypper install"
     fi
 fi
