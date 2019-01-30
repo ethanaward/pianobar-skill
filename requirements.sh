@@ -1,21 +1,46 @@
 #!/bin/bash
 
+# The requirements.sh is an advanced mechanism an should rarely be needed.
+# Be aware that it won't run with root permissions and 'sudo' won't work
+# in most cases.
+
+# detect distribution using lsb_release (may be replaced parsing /etc/*release)
+dist=$(lsb_release -ds)
+
 found_exe() {
     hash "$1" 2>/dev/null
 }
 
-# On a Mark 1 the installation process is often running under a limited
-# user named 'mycroft'.  So avoid apt-get for installing packages.
-
-# polkit uses pkcon instead of apt-get; pkcon will then run apt-get
+# setting dependencies and package manager in relation to the distribution
 if found_exe pkcon; then
-    pkcon install pianobar -y
+    # pkcon is a high-level front end for many package manager technologies,
+    # prefer this if it exists.
+    pm="pkcon"
+else
+    priv="sudo"
+    dependencies=( pianobar )
+
+    if [ "$dist"  == "\"Arch Linux\""  ]; then
+        pm="pacman -S"
+    elif [[ "$dist" =~  "Ubuntu" ]] || [[ "$dist" =~ "Debian" ]] ||[[ "$dist" =~ "Raspbian" ]]; then
+        pm="apt install"
+    elif [[ "$dist" =~ "SUSE" ]]; then
+        pm="zypper install"
+    fi
 fi
+
+# installing dependencies
+if [ ! -z "$pm" ]; then
+   for dep in "${dependencies[@]}"
+   do
+        $priv $pm $dep
+   done
+fi
+
 
 if found_exe pianobar; then
     exit 0
 else
-    echo "Could not find pianobar! Please install with your package manager."
+    echo "Could not find pianobar! Please install with your package manager. ($dist)"
     exit 1
 fi
-
