@@ -4,8 +4,7 @@
 # Be aware that it won't run with root permissions and 'sudo' won't work
 # in most cases.
 
-# detect distribution using lsb_release (may be replaced parsing /etc/*release)
-dist=$(lsb_release -ds)
+dependencies=( pianobar )
 
 found_exe() {
     hash "$1" 2>/dev/null
@@ -18,7 +17,6 @@ if found_exe pkcon; then
     pm="pkcon"
 else
     priv="sudo"
-    dependencies=( pianobar )
 
     if found_exe pacman; then
         # Arch Linux
@@ -44,6 +42,6 @@ fi
 if found_exe pianobar; then
     exit 0
 else
-    echo "Could not find pianobar! Please install with your package manager. ($dist)"
+    echo "Could not find pianobar! Please install with your package manager."
     exit 1
 fi
