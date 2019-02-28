@@ -21,7 +21,7 @@ Sign-up is free with ad-supported streams.
 Mycroft AI (@MycroftAI)
 
 ## Category
-**Entertainment**
+**Music**
 
 ## Tags
 #free #music #pandora
