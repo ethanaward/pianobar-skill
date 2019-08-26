@@ -14,7 +14,7 @@ found_exe() {
 if found_exe pkcon; then
     # pkcon is a high-level front end for many package manager technologies,
     # prefer this if it exists.
-    pm="pkcon"
+    pm="pkcon -y install"
 else
     priv="sudo"
 
