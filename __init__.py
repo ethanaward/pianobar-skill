@@ -219,7 +219,7 @@ class PianobarSkill(CommonPlaySkill):
             f.write(config.format(tls_key,
                                   self.settings["email"],
                                   self.settings["password"],
-                                  self._dir + '/event_command.py'))
+                                  self.root_dir + '/event_command.py'))
 
         # Raspbian requires adjustments to audio output to use PulseAudio
         platform = self.config_core['enclosure'].get('platform')
