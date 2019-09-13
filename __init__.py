@@ -539,7 +539,7 @@ class PianobarSkill(CommonPlaySkill):
             station = self._extract_station(message.data["utterance"])
 
             if station is not None:
-                self._play_station(station)
+                self._play_station(station[0])
             else:
                 self.speak_dialog("no.matching.station")
         else:
