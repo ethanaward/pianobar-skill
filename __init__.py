@@ -90,7 +90,7 @@ class PianobarSkill(CommonPlaySkill):
         self._load_vocab_files()
 
         # Check and then monitor for credential changes
-        self.settings.set_changed_callback(self.on_websettings_changed)
+        self.settings_change_callback = self.on_websettings_changed
         self.on_websettings_changed()
         self.add_event('mycroft.stop', self.stop)
 
