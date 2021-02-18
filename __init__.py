@@ -29,6 +29,7 @@ from os import makedirs, remove, listdir, path
 from os.path import dirname, join, exists, expanduser, isfile, abspath, isdir
 
 from fuzzywuzzy import fuzz, process as fuzz_process
+from json_database import JsonStorage
 
 from adapt.intent import IntentBuilder
 from mycroft import intent_handler
@@ -70,23 +71,26 @@ class PianobarSkill(CommonPlaySkill):
         self._pianobar_initated = False
         self.debug_mode = False
         self.idle_count = 0
-
-        # Initialize settings values
-        self.settings["email"] = ""
-        self.settings["password"] = ""
-        self.settings["song_artist"] = ""
-        self.settings["song_title"] = ""
-        self.settings["song_album"] = ""
-        self.settings["station_name"] = ""
-        self.settings["station_count"] = 0
-        self.settings["stations"] = []
-        self.settings["last_played"] = None
-        self.settings["first_init"] = True  # True = first run ever
+        play_info_file = join(self.file_system.path, "play-info.json")
+        self.play_info = JsonStorage(play_info_file)
 
         subprocess.call(["killall", "-9", "pianobar"])
 
     def initialize(self):
         self._load_vocab_files()
+
+        # Initialize settings values
+        self.settings["email"] = ""
+        self.settings["password"] = ""
+        self.play_info["song_artist"] = ""
+        self.play_info["song_title"] = ""
+        self.play_info["song_album"] = ""
+        self.play_info["station_name"] = ""
+        self.play_info["station_count"] = 0
+        self.play_info["stations"] = []
+        self.play_info["last_played"] = None
+        self.play_info["first_init"] = True  # True = first run ever
+        self.play_info.store()
 
         # Check and then monitor for credential changes
         self.settings_change_callback = self.on_websettings_changed
@@ -299,7 +303,7 @@ class PianobarSkill(CommonPlaySkill):
             self.log.info("State: " + str(self.piano_bar_state))
             if self.piano_bar_state == "playing":
                 self.enclosure.mouth_text(
-                    self.settings["song_artist"] + ": " + self.settings["song_title"]
+                    self.play_info["song_artist"] + ": " + self.play_info["song_title"]
                 )
 
     def cmd(self, s):
@@ -319,7 +323,7 @@ class PianobarSkill(CommonPlaySkill):
             self.speak_dialog("wrong.credentials")
 
     def _init_pianobar(self):
-        if self.settings.get("first_init") is False:
+        if self.play_info.get("first_init") is False:
             return
 
         # Run this exactly one time to prepare pianobar for usage
@@ -335,7 +339,7 @@ class PianobarSkill(CommonPlaySkill):
             self.cmd("S")
             time.sleep(0.5)
             self.process.kill()
-            self.settings["first_init"] = False
+            self.play_info["first_init"] = False
             self._load_current_info()
         except Exception as e:
             self.log.exception("Failed to connect to Pandora: " + repr(e))
@@ -362,23 +366,23 @@ class PianobarSkill(CommonPlaySkill):
             info = {}
 
         # Save the song info for later display
-        self.settings["song_artist"] = info.get("artist", "")
-        self.settings["song_title"] = info.get("title", "")
-        self.settings["song_album"] = info.get("album", "")
+        self.play_info["song_artist"] = info.get("artist", "")
+        self.play_info["song_title"] = info.get("title", "")
+        self.play_info["song_album"] = info.get("album", "")
 
-        self.settings["station_name"] = info.get("stationName", "")
+        self.play_info["station_name"] = info.get("stationName", "")
         if self.debug_mode:
-            self.log.info("Station name: " + str(self.settings["station_name"]))
-        self.settings["station_count"] = int(info.get("stationCount", 0))
-        self.settings["stations"] = []
-        for index in range(self.settings["station_count"]):
+            self.log.info("Station name: " + str(self.play_info["station_name"]))
+        self.play_info["station_count"] = int(info.get("stationCount", 0))
+        self.play_info["stations"] = []
+        for index in range(self.play_info["station_count"]):
             station = "station" + str(index)
-            self.settings["stations"].append(
+            self.play_info["stations"].append(
                 (info[station].replace("Radio", ""), index)
             )
         if self.debug_mode:
-            self.log.info("Stations: " + str(self.settings["stations"]))
-        # self.settings.store()
+            self.log.info("Stations: " + str(self.play_info["stations"]))
+        self.play_info.store()
 
     def _process_valid(self):
         if self.process and self.process.poll() == None:
@@ -433,7 +437,7 @@ class PianobarSkill(CommonPlaySkill):
                 utterance = utterance.replace(vocab, "")
             utterance = " ".join(utterance.split())  # eliminate extra spaces
 
-            stations = [station[0] for station in self.settings["stations"]]
+            stations = [station[0] for station in self.play_info["stations"]]
             probabilities = fuzz_process.extractOne(
                 utterance, stations, scorer=fuzz.ratio
             )
@@ -463,23 +467,23 @@ class PianobarSkill(CommonPlaySkill):
 
         self.enclosure.mouth_think()
         if station:
-            for channel in self.settings.get("stations"):
+            for channel in self.play_info.get("stations"):
                 if station == channel[0]:
                     self.cmd("s")
                     self.current_station = str(channel[1])
                     station_number = str(channel[1]) + "\n"
                     self.cmd(station_number)
                     self.piano_bar_state = "playing"
-                    self.settings["last_played"] = channel
+                    self.play_info["last_played"] = channel
                     self.start_monitor()
         else:
             time.sleep(2)  # wait for pianobar to loading
             if self.debug_mode:
-                self.log.info(self.settings.get("stations"))
+                self.log.info(self.play_info.get("stations"))
             # try catch block because some systems
             # may not load pianobar info in time
             try:
-                channel = self.settings.get("stations")[0]
+                channel = self.play_info.get("stations")[0]
                 if self.debug_mode:
                     self.log.info(channel)
                 if channel:
@@ -488,7 +492,7 @@ class PianobarSkill(CommonPlaySkill):
                     if self.debug_mode:
                         self.log.info(station_number)
                     self.cmd(station_number)
-                    self.settings["last_played"] = channel
+                    self.play_info["last_played"] = channel
                 else:
                     raise ValueError
             except Exception as e:
@@ -509,14 +513,14 @@ class PianobarSkill(CommonPlaySkill):
 
             dialog = None
             if not station:
-                last_played = self.settings.get("last_played")
+                last_played = self.play_info.get("last_played")
                 if last_played:
                     station = last_played[0]
                     dialog = "resuming.last.station"
                 else:
                     # default to the first station in the list
-                    if self.settings.get("stations"):
-                        station = self.settings["stations"][0][0]
+                    if self.play_info.get("stations"):
+                        station = self.play_info["stations"][0][0]
 
             # Play specified station
             self._play_station(station, dialog)
@@ -532,11 +536,11 @@ class PianobarSkill(CommonPlaySkill):
             self.start_monitor()
 
     def handle_next_station(self, message=None):
-        if self.process and self.settings.get("stations"):
+        if self.process and self.play_info.get("stations"):
             new_station = int(self.current_station) + 1
-            if new_station >= int(self.settings.get("station_count", 0)):
+            if new_station >= int(self.play_info.get("station_count", 0)):
                 new_station = 0
-            new_station = self.settings["stations"][new_station][0]
+            new_station = self.play_info["stations"][new_station][0]
             self._play_station(new_station)
 
     def handle_pause(self, message=None):
@@ -573,7 +577,7 @@ class PianobarSkill(CommonPlaySkill):
 
         # build the list of stations
         l = []
-        for station in self.settings.get("stations"):
+        for station in self.play_info.get("stations"):
             l.append(station[0])  # [0] = name
         if len(l) == 0:
             self.speak_dialog("no.stations")
@@ -619,6 +623,9 @@ class PianobarSkill(CommonPlaySkill):
 
         if self.process:
             self.cmd("q")
+
+        self.play_info.store()
+
         super(PianobarSkill, self).shutdown()
 
 
