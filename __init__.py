@@ -38,23 +38,23 @@ from mycroft.messagebus.message import Message
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 
 
-homepage_url = 'https://www.pandora.com'
-login_url = 'https://www.pandora.com/api/v1/auth/login'
+homepage_url = "https://www.pandora.com"
+login_url = "https://www.pandora.com/api/v1/auth/login"
 
 
 def get_pandora_login_token():
     """A login token must be fetched from the website before logging in"""
     r = requests.get(homepage_url)
-    cookies = r.headers['Set-Cookie']
-    token = cookies.split('csrftoken=')[-1].split(';')[0]
+    cookies = r.headers["Set-Cookie"]
+    token = cookies.split("csrftoken=")[-1].split(";")[0]
     return token
 
 
 def get_pandora_user_info(username, password):
     """Return pandora user info directly from the website"""
     token = get_pandora_login_token()
-    headers = {'Cookie': 'csrftoken=' + token, 'X-CsrfToken': token}
-    data = {'username': username, 'password': password}
+    headers = {"Cookie": "csrftoken=" + token, "X-CsrfToken": token}
+    data = {"username": username, "password": password}
     r = requests.post(login_url, json=data, headers=headers)
     return r.json() if r.status_code == 200 else None
 
@@ -66,8 +66,8 @@ class PianobarSkill(CommonPlaySkill):
         self.piano_bar_state = None  # 'playing', 'paused', 'autopause'
         self.current_station = None
         self._is_setup = False
-        self.vocabs = []    # keep a list of vocabulary words
-        self.pianobar_path = expanduser('~/.config/pianobar')
+        self.vocabs = []  # keep a list of vocabulary words
+        self.pianobar_path = expanduser("~/.config/pianobar")
         self._pianobar_initated = False
         self.debug_mode = False
         self.idle_count = 0
@@ -82,7 +82,7 @@ class PianobarSkill(CommonPlaySkill):
         self.settings["station_count"] = 0
         self.settings["stations"] = []
         self.settings["last_played"] = None
-        self.settings['first_init'] = True  # True = first run ever
+        self.settings["first_init"] = True  # True = first run ever
 
         subprocess.call(["killall", "-9", "pianobar"])
 
@@ -92,7 +92,7 @@ class PianobarSkill(CommonPlaySkill):
         # Check and then monitor for credential changes
         self.settings_change_callback = self.on_websettings_changed
         self.on_websettings_changed()
-        self.add_event('mycroft.stop', self.stop)
+        self.add_event("mycroft.stop", self.stop)
 
     def CPS_match_query_phrase(self, phrase):
         if not self._is_setup:
@@ -113,7 +113,7 @@ class PianobarSkill(CommonPlaySkill):
                 match_level = CPSMatchLevel.MULTI_KEY
 
             station = result[0]
-            return (station, match_level, {"station" : station})
+            return (station, match_level, {"station": station})
         elif self.voc_match(phrase, "Pandora"):
             # User has setup Pandora on their account and said Pandora,
             # so is likely trying to start Pandora, e.g.
@@ -139,22 +139,23 @@ class PianobarSkill(CommonPlaySkill):
 
             # Start idle check
             self.idle_count = 0
-            self.cancel_scheduled_event('IdleCheck')
-            self.schedule_repeating_event(self.check_for_idle, None,
-                                          1, name='IdleCheck')
+            self.cancel_scheduled_event("IdleCheck")
+            self.schedule_repeating_event(
+                self.check_for_idle, None, 1, name="IdleCheck"
+            )
 
     def check_for_idle(self):
         if not self.piano_bar_state == "autopause":
-            self.cancel_scheduled_event('IdleCheck')
+            self.cancel_scheduled_event("IdleCheck")
             return
 
-        if self.enclosure.display_manager.get_active() == '':
+        if self.enclosure.display_manager.get_active() == "":
             # No activity, start to fall asleep
             self.idle_count += 1
 
             if self.idle_count >= 2:
                 # Resume playback after 2 seconds of being idle
-                self.cancel_scheduled_event('IdleCheck')
+                self.cancel_scheduled_event("IdleCheck")
                 self.handle_resume_song()
         else:
             self.idle_count = 0
@@ -162,25 +163,38 @@ class PianobarSkill(CommonPlaySkill):
     ######################################################################
 
     def _register_all_intents(self):
-        """ Intents should only be registered once settings are inputed
-            to avoid conflicts with other music skills
+        """Intents should only be registered once settings are inputed
+        to avoid conflicts with other music skills
         """
-        next_station_intent = IntentBuilder("PandoraNextStationIntent"). \
-            require("Next").require("Station").build()
+        next_station_intent = (
+            IntentBuilder("PandoraNextStationIntent")
+            .require("Next")
+            .require("Station")
+            .build()
+        )
         self.register_intent(next_station_intent, self.handle_next_station)
 
-        list_stations_intent = IntentBuilder("PandoraListStationIntent"). \
-            optionally("Pandora").require("Query").require("Station").build()
+        list_stations_intent = (
+            IntentBuilder("PandoraListStationIntent")
+            .optionally("Pandora")
+            .require("Query")
+            .require("Station")
+            .build()
+        )
         self.register_intent(list_stations_intent, self.handle_list)
 
-        play_stations_intent = IntentBuilder("PandoraChangeStationIntent"). \
-            require("Change").require("Station").build()
+        play_stations_intent = (
+            IntentBuilder("PandoraChangeStationIntent")
+            .require("Change")
+            .require("Station")
+            .build()
+        )
         self.register_intent(play_stations_intent, self.play_station)
 
         # Messages from the skill-playback-control / common Audio service
-        self.add_event('mycroft.audio.service.pause', self.handle_pause)
-        self.add_event('mycroft.audio.service.resume', self.handle_resume_song)
-        self.add_event('mycroft.audio.service.next', self.handle_next_song)
+        self.add_event("mycroft.audio.service.pause", self.handle_pause)
+        self.add_event("mycroft.audio.service.resume", self.handle_resume_song)
+        self.add_event("mycroft.audio.service.next", self.handle_next_song)
 
     def on_websettings_changed(self):
         if not self._is_setup:
@@ -200,75 +214,81 @@ class PianobarSkill(CommonPlaySkill):
         if not exists(self.pianobar_path):
             makedirs(self.pianobar_path)
 
-        config_path = join(self.pianobar_path, 'config')
-        with open(config_path, 'w+') as f:
+        config_path = join(self.pianobar_path, "config")
+        with open(config_path, "w+") as f:
 
             # grabs the tls_key needed
             tls_key = subprocess.check_output(
                 "openssl s_client -connect tuner.pandora.com:443 \
                 < /dev/null 2> /dev/null | openssl x509 -noout \
                 -fingerprint | tr -d ':' | cut -d'=' -f2",
-                shell=True)
+                shell=True,
+            )
 
-            config = 'audio_quality = medium\n' + \
-                     'tls_fingerprint = {}\n' + \
-                     'user = {}\n' + \
-                     'password = {}\n' + \
-                     'event_command = {}'
+            config = (
+                "audio_quality = medium\n"
+                + "tls_fingerprint = {}\n"
+                + "user = {}\n"
+                + "password = {}\n"
+                + "event_command = {}"
+            )
 
-            f.write(config.format(tls_key,
-                                  self.settings["email"],
-                                  self.settings["password"],
-                                  self.root_dir + '/event_command.py'))
+            f.write(
+                config.format(
+                    tls_key,
+                    self.settings["email"],
+                    self.settings["password"],
+                    self.root_dir + "/event_command.py",
+                )
+            )
 
         # Raspbian requires adjustments to audio output to use PulseAudio
-        platform = self.config_core['enclosure'].get('platform')
-        if platform == 'picroft' or platform == 'mycroft_mark_1':
-            libao_path = expanduser('~/.libao')
+        platform = self.config_core["enclosure"].get("platform")
+        if platform == "picroft" or platform == "mycroft_mark_1":
+            libao_path = expanduser("~/.libao")
             if not isfile(libao_path):
-                with open(libao_path, 'w') as f:
-                    f.write('dev=0\ndefault_driver=pulse')
+                with open(libao_path, "w") as f:
+                    f.write("dev=0\ndefault_driver=pulse")
                 self.speak_dialog("configured.please.reboot")
                 wait_while_speaking()
-                self.emitter.emit(Message('system.reboot'))
+                self.emitter.emit(Message("system.reboot"))
 
     def _load_vocab_files(self):
         # Keep a list of all the vocabulary words for this skill.  Later
         # these words will be removed from utterances as part of the station
         # name.
-        vocab_dir = join(dirname(__file__), 'vocab', self.lang)
+        vocab_dir = join(dirname(__file__), "vocab", self.lang)
         if path.exists(vocab_dir):
             for vocab_type in listdir(vocab_dir):
                 if vocab_type.endswith(".voc"):
-                    with open(join(vocab_dir, vocab_type), 'r') as voc_file:
+                    with open(join(vocab_dir, vocab_type), "r") as voc_file:
                         for line in voc_file:
                             parts = line.strip().split("|")
                             vocab = parts[0]
                             self.vocabs.append(vocab)
         else:
-            LOG.error('No vocab loaded, ' + vocab_dir + ' does not exist')
+            LOG.error("No vocab loaded, " + vocab_dir + " does not exist")
 
     def start_monitor(self):
         # Clear any existing event
         self.stop_monitor()
 
         # Schedule a new one every second to monitor/update display
-        self.schedule_repeating_event(self._poll_for_pianobar_update,
-                                      None, 1,
-                                      name='MonitorPianobar')
-        self.add_event('recognizer_loop:record_begin',
-                       self.handle_listener_started)
+        self.schedule_repeating_event(
+            self._poll_for_pianobar_update, None, 1, name="MonitorPianobar"
+        )
+        self.add_event("recognizer_loop:record_begin", self.handle_listener_started)
 
     def stop_monitor(self):
         # Clear any existing event
-        self.cancel_scheduled_event('MonitorPianobar')
+        self.cancel_scheduled_event("MonitorPianobar")
 
     def _poll_for_pianobar_update(self, message):
         # Checks once a second for feedback from Pianobar
 
         # 'info_ready' file is created by the event_command.py
         # script when Pianobar sends new track information.
-        info_ready_path = join(self.pianobar_path, 'info_ready')
+        info_ready_path = join(self.pianobar_path, "info_ready")
         if isfile(info_ready_path):
             self._load_current_info()
             try:
@@ -277,28 +297,30 @@ class PianobarSkill(CommonPlaySkill):
                 LOG.error(e)
 
             # Update the "Now Playing song"
-            LOG.info("State: "+str(self.piano_bar_state))
+            LOG.info("State: " + str(self.piano_bar_state))
             if self.piano_bar_state == "playing":
-                self.enclosure.mouth_text(self.settings["song_artist"] + ": " +
-                                          self.settings["song_title"])
+                self.enclosure.mouth_text(
+                    self.settings["song_artist"] + ": " + self.settings["song_title"]
+                )
 
     def cmd(self, s):
         self.process.stdin.write(s.encode())
         self.process.stdin.flush()
 
     def troubleshoot_auth_error(self):
-        user_info = get_pandora_user_info(self.settings['email'],
-                                          self.settings['password'])
+        user_info = get_pandora_user_info(
+            self.settings["email"], self.settings["password"]
+        )
         if user_info:
-            if user_info.get('stationCount') == 0:
-                self.speak_dialog('no.stations')
+            if user_info.get("stationCount") == 0:
+                self.speak_dialog("no.stations")
             else:
-                self.speak_dialog('pandora.error')
+                self.speak_dialog("pandora.error")
         else:
-            self.speak_dialog('wrong.credentials')
+            self.speak_dialog("wrong.credentials")
 
     def _init_pianobar(self):
-        if self.settings.get('first_init') is False:
+        if self.settings.get("first_init") is False:
             return
 
         # Run this exactly one time to prepare pianobar for usage
@@ -306,25 +328,25 @@ class PianobarSkill(CommonPlaySkill):
         try:
             LOG.info("INIT PIANOBAR")
             subprocess.call(["killall", "-9", "pianobar"])
-            self.process = subprocess.Popen(["pianobar"],
-                                            stdin=subprocess.PIPE,
-                                            stdout=subprocess.PIPE)
+            self.process = subprocess.Popen(
+                ["pianobar"], stdin=subprocess.PIPE, stdout=subprocess.PIPE
+            )
             time.sleep(3)
             self.cmd("0\n")
             self.cmd("S")
             time.sleep(0.5)
             self.process.kill()
-            self.settings['first_init'] = False
+            self.settings["first_init"] = False
             self._load_current_info()
         except Exception as e:
-            LOG.exception('Failed to connect to Pandora: '+repr(e))
+            LOG.exception("Failed to connect to Pandora: " + repr(e))
             self.troubleshoot_auth_error()
 
         self.process = None
 
     def _load_current_info(self):
         # Load the 'info' file created by Pianobar when changing tracks
-        info_path = join(self.pianobar_path, 'info')
+        info_path = join(self.pianobar_path, "info")
 
         # this is a hack to remove the info_path
         # if it's a directory. An earlier version
@@ -335,7 +357,7 @@ class PianobarSkill(CommonPlaySkill):
             shutil.rmtree(info_path)
 
         try:
-            with open(info_path, 'r') as f:
+            with open(info_path, "r") as f:
                 info = json.load(f)
         except:
             info = {}
@@ -347,15 +369,16 @@ class PianobarSkill(CommonPlaySkill):
 
         self.settings["station_name"] = info.get("stationName", "")
         if self.debug_mode:
-            LOG.info("Station name: " + str(self.settings['station_name']))
+            LOG.info("Station name: " + str(self.settings["station_name"]))
         self.settings["station_count"] = int(info.get("stationCount", 0))
         self.settings["stations"] = []
         for index in range(self.settings["station_count"]):
             station = "station" + str(index)
             self.settings["stations"].append(
-                (info[station].replace("Radio", ""), index))
+                (info[station].replace("Radio", ""), index)
+            )
         if self.debug_mode:
-            LOG.info("Stations: "+str(self.settings["stations"]))
+            LOG.info("Stations: " + str(self.settings["stations"]))
         # self.settings.store()
 
     def _process_valid(self):
@@ -372,12 +395,11 @@ class PianobarSkill(CommonPlaySkill):
 
             # start pandora
             if self.debug_mode:
-                self.process = \
-                    subprocess.Popen(["pianobar"], stdin=subprocess.PIPE)
+                self.process = subprocess.Popen(["pianobar"], stdin=subprocess.PIPE)
             else:
-                self.process = subprocess.Popen(["pianobar"],
-                                                stdin=subprocess.PIPE,
-                                                stdout=subprocess.PIPE)
+                self.process = subprocess.Popen(
+                    ["pianobar"], stdin=subprocess.PIPE, stdout=subprocess.PIPE
+                )
             self.current_station = "0"
             self.cmd("0\n")
             self.handle_pause()
@@ -387,7 +409,7 @@ class PianobarSkill(CommonPlaySkill):
                 LOG.info("Pianobar process initialized")
                 return
         except Exception:
-            LOG.exception('Failed to connect to Pandora')
+            LOG.exception("Failed to connect to Pandora")
 
         self.troubleshoot_auth_error()
         self.process = None
@@ -410,11 +432,12 @@ class PianobarSkill(CommonPlaySkill):
 
             for vocab in self.vocabs:
                 utterance = utterance.replace(vocab, "")
-            utterance = ' '.join(utterance.split())  # eliminate extra spaces
+            utterance = " ".join(utterance.split())  # eliminate extra spaces
 
             stations = [station[0] for station in self.settings["stations"]]
             probabilities = fuzz_process.extractOne(
-                utterance, stations, scorer=fuzz.ratio)
+                utterance, stations, scorer=fuzz.ratio
+            )
             if self.debug_mode:
                 LOG.info("Probabilities: " + str(probabilities))
             if probabilities[1] > 70:
@@ -427,7 +450,7 @@ class PianobarSkill(CommonPlaySkill):
             return None
 
     def _play_station(self, station, dialog=None):
-        LOG.info("Starting: "+str(station))
+        LOG.info("Starting: " + str(station))
         self._launch_pianobar_process()
 
         if not self.process:
@@ -453,7 +476,7 @@ class PianobarSkill(CommonPlaySkill):
         else:
             time.sleep(2)  # wait for pianobar to loading
             if self.debug_mode:
-                LOG.info(self.settings.get('stations'))
+                LOG.info(self.settings.get("stations"))
             # try catch block because some systems
             # may not load pianobar info in time
             try:
@@ -461,9 +484,7 @@ class PianobarSkill(CommonPlaySkill):
                 if self.debug_mode:
                     LOG.info(channel)
                 if channel:
-                    self.speak_dialog(
-                        "playing.station", {"station": channel[0]}
-                        )
+                    self.speak_dialog("playing.station", {"station": channel[0]})
                     station_number = str(channel[1]) + "\n"
                     if self.debug_mode:
                         LOG.info(station_number)
@@ -561,8 +582,7 @@ class PianobarSkill(CommonPlaySkill):
 
         # read the list
         if len(l) > 1:
-            list = ', '.join(l[:-1]) + " " + \
-                   self.translate("and") + " " + l[-1]
+            list = ", ".join(l[:-1]) + " " + self.translate("and") + " " + l[-1]
         else:
             list = str(l)
         self.speak_dialog("subscribed.to.stations", {"stations": list})
@@ -577,15 +597,15 @@ class PianobarSkill(CommonPlaySkill):
             self.enclosure.mouth_reset()
             return True
 
-    @intent_handler(IntentBuilder("").require("Pandora").
-                    require("Debug").require("On"))
+    @intent_handler(IntentBuilder("").require("Pandora").require("Debug").require("On"))
     def debug_on_intent(self, message=None):
         if not self.debug_mode:
             self.debug_mode = True
             self.speak_dialog("entering.debug.mode")
 
-    @intent_handler(IntentBuilder("").require("Pandora").
-                    require("Debug").require("Off"))
+    @intent_handler(
+        IntentBuilder("").require("Pandora").require("Debug").require("Off")
+    )
     def debug_off_intent(self, message=None):
         if self.debug_mode:
             self.debug_mode = False
