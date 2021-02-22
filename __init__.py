@@ -96,6 +96,7 @@ class PianobarSkill(CommonPlaySkill):
         self.settings_change_callback = self.on_websettings_changed
         self.on_websettings_changed()
         self.add_event("mycroft.stop", self.stop)
+        self.log.exception("Failed to connect to Pandora: ")
 
     def CPS_match_query_phrase(self, phrase):
         if not self._is_setup:
@@ -342,7 +343,7 @@ class PianobarSkill(CommonPlaySkill):
             self.play_info["first_init"] = False
             self._load_current_info()
         except Exception as e:
-            self.log.exception("Failed to connect to Pandora: " + repr(e))
+            self.log.exception("Failed to connect to Pandora: ")
             self.troubleshoot_auth_error()
 
         self.process = None
