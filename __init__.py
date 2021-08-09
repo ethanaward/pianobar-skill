@@ -80,8 +80,8 @@ class PianobarSkill(CommonPlaySkill):
         self._load_vocab_files()
 
         # Initialize settings values
-        self.settings["email"] = ""
-        self.settings["password"] = ""
+        self.settings["email"] = self.settings.get("email","")
+        self.settings["password"] = self.settings.get("password","")
         self.play_info["song_artist"] = ""
         self.play_info["song_title"] = ""
         self.play_info["song_album"] = ""
@@ -96,7 +96,6 @@ class PianobarSkill(CommonPlaySkill):
         self.settings_change_callback = self.on_websettings_changed
         self.on_websettings_changed()
         self.add_event("mycroft.stop", self.stop)
-        self.log.exception("Failed to connect to Pandora: ")
 
     def CPS_match_query_phrase(self, phrase):
         if not self._is_setup:
@@ -211,7 +210,7 @@ class PianobarSkill(CommonPlaySkill):
                     self._register_all_intents()
                     self._is_setup = True
             except Exception as e:
-                self.log.error(e)
+                self.log.error("websettings_changed():threw %s" % (e,))
 
     def _configure_pianobar(self):
         # Initialize the Pianobar configuration file
@@ -298,7 +297,7 @@ class PianobarSkill(CommonPlaySkill):
             try:
                 remove(info_ready_path)
             except Exception as e:
-                self.log.error(e)
+                self.log.debug("Recoverable exception handled %s" % (e,))
 
             # Update the "Now Playing song"
             self.log.info("State: " + str(self.piano_bar_state))
@@ -307,9 +306,12 @@ class PianobarSkill(CommonPlaySkill):
                     self.play_info["song_artist"] + ": " + self.play_info["song_title"]
                 )
 
-    def cmd(self, s):
-        self.process.stdin.write(s.encode())
-        self.process.stdin.flush()
+    def cmd(self, cmd_str):
+        try:
+            self.process.stdin.write(cmd_str.encode())
+            self.process.stdin.flush()
+        except Exception as e:
+            self.log.debug("Recoverable exception handled %s" % (e,))
 
     def troubleshoot_auth_error(self):
         user_info = get_pandora_user_info(
@@ -330,7 +332,6 @@ class PianobarSkill(CommonPlaySkill):
         # Run this exactly one time to prepare pianobar for usage
         # by Mycroft.
         try:
-            self.log.info("INIT PIANOBAR")
             subprocess.call(["killall", "-9", "pianobar"])
             self.process = subprocess.Popen(
                 ["pianobar"], stdin=subprocess.PIPE, stdout=subprocess.PIPE
@@ -343,7 +344,7 @@ class PianobarSkill(CommonPlaySkill):
             self.play_info["first_init"] = False
             self._load_current_info()
         except Exception as e:
-            self.log.exception("Failed to connect to Pandora: ")
+            self.log.warning("Failed to connect to Pandora: %s" % (e,))
             self.troubleshoot_auth_error()
 
         self.process = None
@@ -392,11 +393,15 @@ class PianobarSkill(CommonPlaySkill):
             return False
 
     def _launch_pianobar_process(self):
-        try:
-            self.log.info("Starting Pianobar process")
+        # if we have a process let's 
+        # try to use it to quit gracefully
+        if self.process:
+            self.cmd("q\n")
+        else:
             subprocess.call(["killall", "-9", "pianobar"])
-            time.sleep(1)
+        time.sleep(1)
 
+        try:
             # start pandora
             if self.debug_mode:
                 self.process = subprocess.Popen(["pianobar"], stdin=subprocess.PIPE)
@@ -413,7 +418,7 @@ class PianobarSkill(CommonPlaySkill):
                 self.log.info("Pianobar process initialized")
                 return
         except Exception:
-            self.log.exception("Failed to connect to Pandora")
+            self.log.warning("Failed to connect to Pandora")
 
         self.troubleshoot_auth_error()
         self.process = None
@@ -596,6 +601,7 @@ class PianobarSkill(CommonPlaySkill):
             self.handle_resume_song()
 
     def stop(self):
+        return self.shutdown()
         if self.piano_bar_state and not self.piano_bar_state == "paused":
             self.handle_pause()
             self.enclosure.mouth_reset()
@@ -629,6 +635,14 @@ class PianobarSkill(CommonPlaySkill):
 
         super(PianobarSkill, self).shutdown()
 
+    def converse(self, utterances, lang="en-us"):
+        self.cmd("P")    # always resume playing
+        if self.process and self.piano_bar_state == "playing":
+            # consume all utterances while playing
+            # will need to hard match on commands here
+            # if necessary because of old core design.
+            return True
+        return False
 
 def create_skill():
     return PianobarSkill()
