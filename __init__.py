@@ -211,6 +211,7 @@ class PianobarSkill(CommonPlaySkill):
                     self._is_setup = True
             except Exception as e:
                 self.log.error("websettings_changed():threw %s" % (e,))
+        self._configure_pianobar()
 
     def _configure_pianobar(self):
         # Initialize the Pianobar configuration file
