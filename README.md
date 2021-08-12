@@ -1,7 +1,7 @@
-## Pandora
-Listen to music from the Pandora music service
+# <img src='https://raw.githack.com/FortAwesome/Font-Awesome/master/svgs/solid/music.svg' card_color='#224299' width='50' height='50' style='vertical-align:bottom'/> Pandora
+Listen to the Pandora music service
 
-## Description 
+## About 
 Pandora provides dynamically generated internet radio streams.  Streams are
 influenced by the the traits of the music played and the songs you like
 or skip.
@@ -9,22 +9,22 @@ or skip.
 Using this skill does require a [Pandora.com](https://pandora.com) account.
 Sign-up is free with ad-supported streams.
 
-This skill should work with Mycroft version 0.9.1 +
-
 ## Examples 
 * "Play Pandora"
 * "Play Today's Hits Radio on Pandora"
 * "Skip this song"
 * "Next station"
 * "Next song"
-* "Pause Pandora"
-* "Resume Pandora"
 * "List my stations"
-* "Next station"
-* "Change station to Today's Top Hits on Pandora"
 
 ## Credits 
-Mycroft AI
+Mycroft AI (@MycroftAI)
+
+## Category
+**Music**
+
+## Tags
+#free #music #pandora
 
 
 # Installation
